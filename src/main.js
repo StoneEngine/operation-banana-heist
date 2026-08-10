@@ -62,6 +62,7 @@ function grabAt(x, y) {
     game.round.bananas += gain;
     game.round.stolenTotal += 1;
     game.monkey.setAngerFromScore(game.round.stolenTotal);
+    sfx.music.setAnger(game.monkey.anger);        // ยิ่งโกรธ เพลงยิ่งเร่ง
     fx.fly(game.player.x, game.player.handY - 90, game.round.mult > 1);
     fx.text(game.player.x, game.player.handY - 130, `+${gain}`,
       game.round.mult > 1 ? '#ffd94a' : '#fff1e0', 30 + Math.min(game.player.combo, 10));
@@ -100,7 +101,9 @@ canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 ui.play.addEventListener('click', () => { sfx.unlock(); start(); });
 ui.again.addEventListener('click', () => { sfx.unlock(); start(); });
 ui.mute.addEventListener('click', () => {
-  ui.mute.textContent = sfx.toggleMute() ? '🔇 เสียงปิด' : '🔊 เสียงเปิด';
+  const m = sfx.toggleMute();
+  ui.mute.textContent = m ? '🔇 เสียงปิด' : '🔊 เสียงเปิด';
+  if (!m && game.running) sfx.music.start();     // เปิดเสียงกลางเกม = ดนตรีกลับมา
 });
 
 // ---------- วงจรเกม ----------
@@ -111,12 +114,15 @@ function start() {
   game.monkey.reset();
   fx.reset();
   game.running = true;
+  sfx.music.setAnger(0);
+  sfx.music.start();
   ui.menu.hidden = true;
   ui.over.hidden = true;
 }
 
 function finish() {
   game.running = false;
+  sfx.music.stop();
   const isBest = bestScore.set(game.round.bananas);
   ui.score.textContent = game.round.bananas;
   ui.best.textContent = bestScore.get();

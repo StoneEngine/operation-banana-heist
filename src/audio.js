@@ -39,9 +39,98 @@ function noise(dur = 0.25, gain = 0.15) {
   src.start();
 }
 
+/** เสียงร้องลิง — ออสซิลเลเตอร์ + วิบราโตเร็วๆ ให้ออกแนวตลก ไม่ใช่สัตว์จริง
+ *  kind: 'ook' (อู๊ก อู๊ก) | 'screech' (อี๊ดดด ตอนตื่น) | 'angry' (โวยวายตอนจับได้) */
+function monkeyVoice(kind, delay = 0) {
+  if (muted) return;
+  const a = ac();
+  const t0 = a.currentTime + delay;
+
+  const syllables = {
+    ook: [[300, 190, 0.14], [340, 210, 0.16]],                       // สองพยางค์ต่ำ
+    screech: [[520, 1500, 0.1], [1400, 700, 0.22]],                  // ปรี๊ดขึ้นแล้วลง
+    angry: [[420, 260, 0.11], [520, 300, 0.11], [700, 180, 0.26]],   // ด่ารัวสามที
+  }[kind];
+
+  let t = t0;
+  for (const [from, to, dur] of syllables) {
+    const osc = a.createOscillator();
+    const g = a.createGain();
+    const lp = a.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 2600;
+
+    // วิบราโตคือตัวทำให้ฟังดูเป็น "เสียงร้อง" ไม่ใช่เสียงบี๊บ
+    const lfo = a.createOscillator();
+    const lfoGain = a.createGain();
+    lfo.frequency.value = 22;
+    lfoGain.gain.value = from * 0.12;
+    lfo.connect(lfoGain).connect(osc.frequency);
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(from, t);
+    osc.frequency.exponentialRampToValueAtTime(to, t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.13, t + dur * 0.2);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+
+    osc.connect(lp).connect(g).connect(a.destination);
+    osc.start(t); lfo.start(t);
+    osc.stop(t + dur + 0.02); lfo.stop(t + dur + 0.02);
+    t += dur + 0.05;
+  }
+}
+
+// ---------- ดนตรีประกอบ: เบสย่องๆ แนวการ์ตูนขโมยของ ----------
+// เดินบันไดเสียง A minor ทีละครึ่งเสียง = อารมณ์ "ย่องเข้าไปขโมย" แบบ Pink Panther
+const BASS = [110.00, 0, 130.81, 0, 146.83, 0, 155.56, 0,
+              164.81, 0, 146.83, 0, 130.81, 0, 123.47, 0];
+const BLIP = { 3: 659.25, 7: 783.99, 11: 659.25, 15: 987.77 };  // ตัวเอกแหลมๆ ตามจังหวะ
+
+const music = {
+  on: false, step: 0, nextTime: 0, timer: null, anger: 0,
+
+  get stepDur() { return 0.155 * Math.max(0.62, 1 - this.anger * 0.07); },  // โกรธ = เพลงเร่ง
+
+  start() {
+    if (this.on) return;
+    const a = ac();
+    this.on = true;
+    this.step = 0;
+    this.nextTime = a.currentTime + 0.06;
+    this.timer = setInterval(() => this.schedule(), 25);
+  },
+  stop() {
+    this.on = false;
+    clearInterval(this.timer);
+    this.timer = null;
+  },
+  setAnger(v) { this.anger = v; },
+
+  schedule() {
+    if (!this.on) return;
+    const a = ac();
+    while (this.nextTime < a.currentTime + 0.12) {   // จองโน้ตล่วงหน้ากันกระตุก
+      const s = this.step % 16;
+      const at = this.nextTime - a.currentTime;
+      const f = BASS[s];
+      if (f) tone({ freq: f, to: f * 0.98, dur: this.stepDur * 1.1, type: 'triangle', gain: 0.075, delay: at });
+      if (BLIP[s]) tone({ freq: BLIP[s], dur: 0.07, type: 'square', gain: 0.045, delay: at });
+      if (s % 4 === 2) noise(0.05, 0.035);           // เคาะเบาๆ เป็นจังหวะ
+      this.nextTime += this.stepDur;
+      this.step++;
+    }
+  },
+};
+
 const sfx = {
+  music,
   unlock() { ac(); },
-  toggleMute() { muted = !muted; return muted; },
+  toggleMute() {
+    muted = !muted;
+    if (muted) music.stop();
+    return muted;
+  },
   get muted() { return muted; },
 
   grab(combo = 0) {
@@ -55,11 +144,18 @@ const sfx = {
     [0, 0.09, 0.18].forEach((d, i) =>
       tone({ freq: 600 - i * 130, dur: 0.16, type: 'sine', gain: 0.12, delay: d }));
   },
-  warn() { tone({ freq: 880, to: 640, dur: 0.14, type: 'sawtooth', gain: 0.09 }); },
-  wake() { tone({ freq: 300, to: 120, dur: 0.3, type: 'sawtooth', gain: 0.12 }); },
+  warn() {
+    tone({ freq: 880, to: 640, dur: 0.14, type: 'sawtooth', gain: 0.09 });
+    monkeyVoice('ook');                       // "อู๊ก?" แบบละเมอสงสัย
+  },
+  wake() {
+    tone({ freq: 300, to: 120, dur: 0.3, type: 'sawtooth', gain: 0.12 });
+    monkeyVoice('screech', 0.05);             // อี๊ดดดด!
+  },
   caught() {
     noise(0.35, 0.18);
     tone({ freq: 260, to: 70, dur: 0.45, type: 'square', gain: 0.14 });
+    monkeyVoice('angry', 0.08);               // ด่ารัวๆ
   },
   end() {
     [523, 659, 784, 1046].forEach((f, i) =>
