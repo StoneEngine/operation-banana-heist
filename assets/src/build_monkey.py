@@ -171,20 +171,37 @@ def blob(c, cx, cy, w, h, color):
 
 def arm_throw(c, p):
     """แขนขวาหมุนรอบไหล่: p=0 เงื้อขึ้นข้างหัว -> p=1 เหวี่ยงลงข้างลำตัว (follow-through)
-    หมุนรอบไหล่ไม่พาดหน้า และต้องคู่กับ arms(..., right=False) ห้ามวาดทับแขนเดิม
+    ต้องคู่กับ arms(..., right=False) ห้ามวาดทับแขนเดิม (ไม่งั้นลิงมี 3 แขน)
     ห้ามทำตากากบาท เดี๋ยวดูเหมือนตาย"""
     sx, sy = SHOULDER
     ang = math.radians(lerp(-62, 62, p))    # เอียงออกข้างพอให้แขนพ้นหัว ไม่งั้นตอนเงื้อจะเป็นก้อนทับหัว
     dx, dy = math.cos(ang), math.sin(ang)
-    blob(c, sx + dx * 5, sy + dy * 5, 12, 11, FUR[2])       # ต้นแขน
-    blob(c, sx + dx * 12, sy + dy * 12, 10, 10, FUR[3])     # ปลายแขน
-    hx, hy = sx + dx * 19, sy + dy * 19
-    blob(c, hx, hy, 9, 8, SKIN[2])                          # มือ
+    up = (sx + dx * 7, sy + dy * 7)         # ต้นแขน
+    fo = (sx + dx * 15, sy + dy * 15)       # ปลายแขน
+    hx, hy = sx + dx * 23, sy + dy * 23     # มือ (ยื่นพ้นตัวชัดๆ ไม่งั้นดูเป็นตอ)
+
+    if 0.2 < p < 0.9:                       # เส้นแรงเหวี่ยงตามหลังมือ = ตัวที่ทำให้ "ดุ" ในอนิเมชัน 2D
+        for k in (1, 2, 3):
+            a = ang - math.radians(15 * k)
+            for r in (19, 23):
+                c.set(round(sx + math.cos(a) * r), round(sy + math.sin(a) * r), WHITE)
+
+    # เส้นคั่นในตัว: วาด INK ใหญ่กว่า 2px รองก่อนทุกท่อน แล้วค่อยลงสีทับ
+    # (c.outline() ตีเส้นแค่ขอบที่ติดพื้นโปร่งใส ตรงที่แขนทับหัวจะไม่มีเส้น กลายเป็นก้อนเนื้อเดียวกับหัว)
+    blob(c, *up, 11, 11, INK)
+    blob(c, *fo, 10, 10, INK)
+    blob(c, hx, hy, 11, 10, INK)
+    blob(c, *up, 9, 9, FUR[1])              # ใช้เฉดเข้มกว่าหัว (FUR[3]) ให้แยกออกจากกัน
+    blob(c, *fo, 8, 8, FUR[2])
+    blob(c, hx, hy, 9, 8, SKIN[2])
+    c.set(round(hx + dx * 3), round(hy + dy * 3 - 2), INK)   # ร่องนิ้ว ให้อ่านออกว่าเป็นมือกำ
+    c.set(round(hx + dx * 3), round(hy + dy * 3 + 1), INK)
     c.outline(INK)
-    if p < 0.45:                                            # เปลือกกล้วยยังอยู่ในมือก่อนปาออก
-        for ox, oy in ((-1, -4), (2, -3), (0, -1), (3, -2)):
-            c.set(round(hx + ox), round(hy + oy), YEL_PEEL)
-            c.set(round(hx + ox + 1), round(hy + oy + 1), YEL_PEEL)
+    if p < 0.45:                            # เปลือกกล้วยยังอยู่ในมือก่อนปาออก
+        px_, py_ = hx + dx * 4, hy + dy * 4
+        for ox, oy in ((-1, -3), (2, -2), (0, 0), (3, -1)):
+            c.set(round(px_ + ox), round(py_ + oy), YEL_PEEL)
+            c.set(round(px_ + ox + 1), round(py_ + oy + 1), YEL_PEEL)
 
 
 def face_caught_frame(c, p):
