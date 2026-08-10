@@ -1,10 +1,10 @@
-# คู่มือเกม Banana Heist (แข่งขโมยกล้วยจากลิง)
+# คู่มือเกม ปฏิบัติการปล้นกล้วย (Operation Banana Heist)
 
 > รายงาน Manual ตามที่อาจารย์กำหนด — ช่องที่เป็น _(…)_ ต้องเติมก่อนส่ง
 
 ## 1. ชื่อกลุ่ม / ชื่อเกม / สมาชิก
 
-- ชื่อเกม: **Banana Heist — แข่งขโมยกล้วยจากลิง**
+- ชื่อเกม: **ปฏิบัติการปล้นกล้วย (Operation Banana Heist)**
 - ชื่อกลุ่ม: _(ใส่ชื่อกลุ่ม)_
 - สมาชิก:
   1. _(ชื่อ-สกุล / รหัสนิสิต)_
@@ -53,7 +53,7 @@
 
 ## 7. เครื่องมือที่ใช้
 
-- HTML / CSS / JavaScript (ES modules) + Canvas 2D — ไม่ใช้ไลบรารีภายนอก
-- sprite ทั้งหมดวาดเองด้วย Python + Pillow (`assets/src/*.py`)
+- HTML / CSS / JavaScript + Canvas 2D — ไม่ใช้ไลบรารีภายนอก ไม่มี build step (ดับเบิลคลิก index.html เล่นได้เลย)
+- sprite ทั้งหมดวาดเองด้วยโค้ด Python + Pillow ไว้ล่วงหน้า (`assets/src/*.py`) — ตัวเกมโหลดแค่ไฟล์ PNG ไม่เกี่ยวกับ Python ตอนเล่น
 - เสียงสังเคราะห์ด้วย WebAudio API
 - Deploy: GitHub Pages

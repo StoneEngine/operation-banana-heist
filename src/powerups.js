@@ -1,7 +1,5 @@
 // กล้วยทอง + วิทยุกล่อมลิง — โผล่เฉพาะตอนลิงหลับ กดโดนถึงได้ผล
-import { CFG, STATE } from './config.js';
-
-export class Powerups {
+class Powerups {
   constructor() { this.items = []; }
   reset() { this.items = []; }
 

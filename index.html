@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Banana Heist — แข่งขโมยกล้วยจากลิง</title>
+<title>ปฏิบัติการปล้นกล้วย — Operation Banana Heist</title>
 <link rel="stylesheet" href="./style.css">
 </head>
 <body>
@@ -13,8 +13,8 @@
   <div id="loading" class="overlay">กำลังโหลด…</div>
 
   <div id="menu" class="overlay" hidden>
-    <h1>🍌 BANANA HEIST</h1>
-    <p class="sub">แข่งขโมยกล้วยจากลิง</p>
+    <h1>🍌 ปฏิบัติการปล้นกล้วย</h1>
+    <p class="sub">OPERATION BANANA HEIST · แข่งขโมยกล้วยจากลิง</p>
     <ul class="rules">
       <li>ลิง <b>หลับ</b> = กดขโมยได้</li>
       <li>เห็น <b class="warn">!</b> = ใกล้ตื่นแล้ว รีบหยุด</li>
@@ -36,6 +36,13 @@
 
   <button id="btn-mute" class="mute">🔊 เสียงเปิด</button>
 </div>
-<script type="module" src="./src/main.js"></script>
+<!-- โหลดตามลำดับ: config -> logic -> render -> main (ไม่ใช้ module จะได้ดับเบิลคลิกเปิดได้เลย) -->
+<script src="./src/config.js"></script>
+<script src="./src/state.js"></script>
+<script src="./src/player.js"></script>
+<script src="./src/powerups.js"></script>
+<script src="./src/audio.js"></script>
+<script src="./src/render.js"></script>
+<script src="./src/main.js"></script>
 </body>
 </html>

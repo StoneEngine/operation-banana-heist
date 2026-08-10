@@ -1,9 +1,7 @@
 // state machine ของเจ้าจ๋อ + ตัวจับเวลารอบเกม
-import { CFG, STATE } from './config.js';
-
 const rand = (a, b) => a + Math.random() * (b - a);
 
-export class Monkey {
+class Monkey {
   constructor(onEnter) {
     this.onEnter = onEnter || (() => {});
     this.reset();
@@ -70,7 +68,7 @@ export class Monkey {
   }
 }
 
-export class Round {
+class Round {
   constructor() { this.reset(); }
   reset() {
     this.time = CFG.ROUND_TIME;
@@ -92,7 +90,7 @@ export class Round {
   addMult(mult, sec) { this.mult = mult; this.multTime = sec; }
 }
 
-export const bestScore = {
+const bestScore = {
   get() { return Number(localStorage.getItem('bananaHeistBest') || 0); },
   set(v) {
     if (v > this.get()) { localStorage.setItem('bananaHeistBest', String(v)); return true; }

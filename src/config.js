@@ -1,5 +1,5 @@
 // ทุกตัวเลขที่จูน balance ได้อยู่ไฟล์นี้ที่เดียว — แก้แล้วรีเฟรชได้เลย
-export const CFG = {
+const CFG = {
   // ----- จอ -----
   W: 960,
   H: 540,
@@ -40,7 +40,7 @@ export const CFG = {
   SHAKE_CAUGHT: 12,
 };
 
-export const STATE = {
+const STATE = {
   SLEEPING: 'SLEEPING',
   WARNING: 'WARNING',
   AWAKE: 'AWAKE',

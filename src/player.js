@@ -1,7 +1,5 @@
 // ผู้เล่น = มือหัวขโมย: ตำแหน่ง, อนิเมชันยื่นมือ, คูลดาวน์, ผลของการกด
-import { CFG, STATE } from './config.js';
-
-export class Player {
+class Player {
   constructor() { this.reset(); }
 
   reset() {

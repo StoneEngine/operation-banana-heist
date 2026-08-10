@@ -1,12 +1,12 @@
 // เสียงทั้งหมดสังเคราะห์ด้วย WebAudio — ไม่มีไฟล์เสียงให้โหลด เล่นได้แม้เน็ตหลุด
-let ctx = null;
+let audioCtx = null;
 let muted = false;
 let snoreTimer = 0;
 
 function ac() {
-  if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
-  if (ctx.state === 'suspended') ctx.resume();
-  return ctx;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
 }
 
 function tone({ freq = 440, to = null, dur = 0.12, type = 'square', gain = 0.12, delay = 0 }) {
@@ -39,7 +39,7 @@ function noise(dur = 0.25, gain = 0.15) {
   src.start();
 }
 
-export const sfx = {
+const sfx = {
   unlock() { ac(); },
   toggleMute() { muted = !muted; return muted; },
   get muted() { return muted; },

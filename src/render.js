@@ -1,6 +1,4 @@
 // วาดทุกอย่างลง canvas: ฉาก, ลิง, มือ, ไอเทม, เอฟเฟกต์, HUD
-import { CFG, STATE } from './config.js';
-
 const SPRITES = {
   bg: 'bg.png',
   monkey_sleep: 'monkey_sleep.png',
@@ -14,9 +12,9 @@ const SPRITES = {
   radio: 'radio.png',
 };
 
-export const img = {};
+const img = {};
 
-export function loadSprites() {
+function loadSprites() {
   const jobs = Object.entries(SPRITES).map(([key, file]) => new Promise((res, rej) => {
     const im = new Image();
     im.onload = () => { img[key] = im; res(); };
@@ -34,7 +32,7 @@ const PILE_Y = GROUND_Y - 8;
 const CX = MONKEY.x + MONKEY.size / 2;   // จุดกึ่งกลางลิง
 
 // ---------- เอฟเฟกต์ ----------
-export const fx = {
+const fx = {
   texts: [], flies: [], peels: [], shake: 0, flash: 0, sparks: [],
 
   reset() { this.texts = []; this.flies = []; this.peels = []; this.sparks = []; this.shake = 0; this.flash = 0; },
@@ -106,7 +104,7 @@ function panel(ctx, x, y, w, h, fill = 'rgba(28,20,14,0.72)') {
 }
 
 // ---------- ฉากหลัก ----------
-export function draw(ctx, game) {
+function draw(ctx, game) {
   const { monkey, player, round, powerups, time } = game;
   ctx.imageSmoothingEnabled = false;
   ctx.save();

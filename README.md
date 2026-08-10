@@ -1,4 +1,4 @@
-# 🍌 Banana Heist — แข่งขโมยกล้วยจากลิง
+# 🍌 ปฏิบัติการปล้นกล้วย (Operation Banana Heist)
 
 เกม 2D บนเว็บ (HTML + CSS + JavaScript + Canvas) ส่งงานวิชา **273389 Game Design and Development**
 กิจกรรม **Game2D for Sci Week** · มหาวิทยาลัยนเรศวร
@@ -23,12 +23,8 @@
 
 ## รันในเครื่อง
 
-ต้องเสิร์ฟผ่าน http (ใช้ ES modules) — เปิดไฟล์ตรงๆ ด้วย `file://` จะไม่ทำงาน
-
-```bash
-python -m http.server 8000
-# เปิด http://localhost:8000
-```
+**ดับเบิลคลิก `index.html` เปิดในเบราว์เซอร์ได้เลย** — เกมเป็น HTML/CSS/JS ล้วน
+ไม่มี build step ไม่มีไลบรารีภายนอก ไม่ต้องติดตั้งอะไร
 
 ## สร้าง sprite ใหม่
 

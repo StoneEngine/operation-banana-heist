@@ -1,11 +1,4 @@
 // bootstrap + game loop
-import { CFG, STATE } from './config.js';
-import { Monkey, Round, bestScore } from './state.js';
-import { Player } from './player.js';
-import { Powerups } from './powerups.js';
-import { loadSprites, draw, fx } from './render.js';
-import { sfx } from './audio.js';
-
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const ui = {
