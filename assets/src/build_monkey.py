@@ -16,6 +16,7 @@ SKIN = ramp("#d9a066", steps=5)       # muzzle / ears inner / hands
 INK = "#2b1b13"
 WHITE = "#fff1e0"
 PINK = "#d47b7b"
+YEL_PEEL = "#f2c14e"
 
 
 def base_body():
@@ -126,15 +127,33 @@ def face_awake(c):
 
 
 def face_caught(c):
-    # eyes shut in a shout, mouth huge
-    for x0, s in ((22, 1), (34, 1)):
-        c.line(x0, 18, x0 + 8, 26, INK)
-        c.line(x0, 26, x0 + 8, 18, INK)
-        c.line(x0, 19, x0 + 8, 27, INK)
-    c.ellipse(23, 29, 18, 14, INK)
-    c.ellipse(27, 34, 10, 6, PINK)
+    """โกรธจัด ตะโกน + เงื้อแขนปาเปลือกกล้วย (ห้ามทำตากากบาท เดี๋ยวดูเหมือนตาย)"""
+    # ตาเบิ่งโพลง ม่านตาเล็ก = โมโหสุดขีด
+    c.ellipse(21, 17, 10, 10, WHITE)
+    c.ellipse(34, 17, 10, 10, WHITE)
+    c.ellipse(24, 20, 4, 4, INK)
+    c.ellipse(37, 20, 4, 4, INK)
+    c.set(25, 21, WHITE); c.set(38, 21, WHITE)
+    # คิ้วชนกันกลางหน้าผาก
+    for d in range(3):
+        c.line(19, 13 + d, 31, 18 + d, INK)
+        c.line(33, 18 + d, 45, 13 + d, INK)
+    # ปากอ้าตะโกน
+    c.ellipse(24, 27, 16, 12, SKIN[4])
+    c.ellipse(29, 25, 6, 4, PINK)
+    c.ellipse(25, 29, 14, 10, INK)
     c.rect(28, 30, 2, 3, WHITE)
     c.rect(35, 30, 2, 3, WHITE)
+    c.ellipse(28, 34, 8, 4, PINK)
+
+    # แขนขวาเงื้อขึ้นเหนือหัว ถือเปลือกกล้วยเตรียมปา
+    c.ellipse(44, 12, 12, 11, FUR[2])          # ต้นแขน
+    c.ellipse(48, 4, 11, 10, FUR[3])           # ปลายแขน
+    c.ellipse(50, 1, 9, 8, SKIN[2])            # มือ
+    c.outline(INK)
+    for x, y in ((52, 0), (55, 1), (53, 3), (56, 4)):   # เปลือกกล้วยในมือ
+        c.set(x, y, YEL_PEEL)
+        c.set(x + 1, y + 1, YEL_PEEL)
     return c
 
 

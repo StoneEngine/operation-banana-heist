@@ -3,7 +3,7 @@
 Run:  python assets/src/build_props.py
 Out:  assets/sprites/{banana,banana_gold,basket,hand,radio,bg}.png
 """
-import sys, os, random
+import sys, os
 sys.path.append(r"C:\Users\MSI KATANA\.claude\skills\pixel-art-studio\scripts")
 from pxlib import Canvas, ramp, save
 
@@ -37,6 +37,24 @@ def banana(body, hi, lo, sparkle=False):
     if sparkle:
         for x, y in ((2, 2), (14, 8), (5, 14)):
             c.set(x, y, "#fffbe0")
+    return c
+
+
+def peel():
+    """เปลือกกล้วยเปิด 3 แฉก — ใช้ตอนลิงปาใส่หน้าผู้เล่น"""
+    c = Canvas(16, 16)
+    body = "#f0c73f"; dark = "#c99a1c"; inner = "#fff3c4"
+    # แฉกสามอันกางออกจากจุดร่วมด้านล่าง
+    for x1, y1 in ((1, 2), (8, 0), (14, 3)):
+        c.line(8, 13, x1, y1, body)
+        c.line(7, 13, x1 - 1, y1 + 1, body)
+        c.set(x1, y1, dark)
+    c.polygon([(8, 13), (3, 5), (5, 4), (9, 11)], body)
+    c.polygon([(8, 13), (8, 2), (10, 3), (10, 12)], inner)
+    c.polygon([(8, 13), (13, 5), (14, 7), (10, 12)], body)
+    c.ellipse(5, 10, 7, 5, dark)          # ก้นเปลือกที่คว่ำอยู่
+    c.ellipse(6, 11, 5, 3, body)
+    c.outline(INK)
     return c
 
 
@@ -84,49 +102,10 @@ def radio():
     return c
 
 
-def leaf(c, x, y, w, h, col):
-    c.ellipse(x, y, w, h, col)
-    c.line(x + w // 2, y + 1, x + w // 2, y + h - 2, GREEN[0])
-
-
-def bg():
-    """240x135 jungle backdrop, canvas scales it x4."""
-    rnd = random.Random(7)
-    c = Canvas(240, 135, fill="#2f7a58")
-    c.gradient_dither(["#12402f", "#1d5c46", "#2f7a58", "#49966a", "#69b981"],
-                      axis="y", box=(0, 0, 240, 104))
-    # far foliage band
-    for i in range(34):
-        x = rnd.randrange(-6, 240)
-        y = rnd.randrange(0, 46)
-        leaf(c, x, y, rnd.randrange(16, 30), rnd.randrange(8, 14), GREEN[1])
-    # ground
-    c.rect(0, 104, 240, 31, ramp("#5a3c1f", 5)[1])
-    c.gradient_dither(["#4a3018", "#5a3c1f", "#6b4a2a"], axis="y", box=(0, 104, 240, 31))
-    for i in range(70):                        # pebbles / grass tufts
-        x, y = rnd.randrange(240), rnd.randrange(106, 134)
-        c.set(x, y, GREEN[0] if rnd.random() < .5 else ramp("#5a3c1f", 5)[0])
-    # grass edge
-    for x in range(0, 240, 3):
-        h = rnd.randrange(2, 5)
-        c.line(x, 104, x, 104 - h, GREEN[2])
-        c.line(x + 1, 104, x + 1, 105 - h, GREEN[1])
-    # vines from top
-    for x in (18, 62, 150, 210):
-        L = rnd.randrange(20, 60)
-        for y in range(L):
-            c.set(x + (y // 7) % 2, y, GREEN[1])
-            if y % 9 == 0:
-                leaf(c, x - 3, y, 7, 4, GREEN[2])
-    # foreground leaves, bottom corners
-    for x, y, w, h in ((-8, 112, 46, 22), (206, 108, 48, 24), (150, 124, 40, 18)):
-        leaf(c, x, y, w, h, "#1d5c46")
-    return c
-
-
 items = {
     "banana": banana("#f7d94c", "#fff3a0", "#d09a1e"),
     "banana_gold": banana("#ffd21f", "#fff8c2", "#c8860a", sparkle=True),
+    "banana_peel": peel(),
     "basket": basket(),
     "hand": hand(),
     "radio": radio(),
@@ -135,6 +114,4 @@ for name, c in items.items():
     save(c, os.path.join(SPR, f"{name}.png"))
     save(c, os.path.join(PRE, f"{name}.png"), scale=8)
 
-b = bg()
-save(b, os.path.join(SPR, "bg.png"))
-save(b, os.path.join(PRE, "bg.png"), scale=2)
+# หมายเหตุ: ฉากหลัง (bg.png) ย้ายไปอยู่ assets/src/build_bg.py แล้ว อย่าวาดซ้ำที่นี่

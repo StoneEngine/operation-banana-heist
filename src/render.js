@@ -6,6 +6,7 @@ const SPRITES = {
   monkey_awake: 'monkey_awake.png',
   monkey_caught: 'monkey_caught.png',
   banana: 'banana.png',
+  banana_peel: 'banana_peel.png',
   banana_gold: 'banana_gold.png',
   basket: 'basket.png',
   hand: 'hand.png',
@@ -33,9 +34,12 @@ const CX = MONKEY.x + MONKEY.size / 2;   // จุดกึ่งกลางล
 
 // ---------- เอฟเฟกต์ ----------
 const fx = {
-  texts: [], flies: [], peels: [], shake: 0, flash: 0, sparks: [],
+  texts: [], flies: [], peels: [], splats: [], shake: 0, flash: 0, sparks: [],
 
-  reset() { this.texts = []; this.flies = []; this.peels = []; this.sparks = []; this.shake = 0; this.flash = 0; },
+  reset() {
+    this.texts = []; this.flies = []; this.peels = []; this.splats = [];
+    this.sparks = []; this.shake = 0; this.flash = 0;
+  },
 
   text(x, y, msg, color = '#fff1e0', size = 30) {
     this.texts.push({ x, y, msg, color, size, life: 0.9, max: 0.9 });
@@ -43,12 +47,20 @@ const fx = {
   fly(x, y, gold = false) {
     this.flies.push({ x, y, x0: x, y0: y, t: 0, dur: 0.45, gold, spin: Math.random() * 6 });
   },
-  peelBurst() {
-    for (let i = 0; i < 14; i++) {
+  /** ลิงปาเปลือกกล้วยเข้าหากล้อง — บินโตขึ้นเรื่อยๆ แล้วแปะหน้าจอ */
+  peelBurst(targetX = CFG.W / 2) {
+    for (let i = 0; i < 7; i++) {
+      const x = CX + (Math.random() - 0.5) * 70;
+      const y = MONKEY.y + 40 + Math.random() * 60;
+      const T = 0.42 + Math.random() * 0.16;          // เวลาบินถึงหน้าเรา
+      const tx = targetX + (Math.random() - 0.5) * 620;
       this.peels.push({
-        x: CX, y: MONKEY.y + 120,
-        vx: (Math.random() - 0.5) * 700, vy: -Math.random() * 500 - 80,
-        rot: Math.random() * 6, vr: (Math.random() - 0.5) * 14, life: 1.4,
+        x, y, z: 0.35,
+        vx: (tx - x) / T,
+        vy: (CFG.H + 70 - y) / T,
+        vz: (2.6 - 0.35) / T,
+        rot: Math.random() * 6, vr: (Math.random() - 0.5) * 16,
+        life: T + 0.1, delay: i * 0.05,
       });
     }
   },
@@ -67,10 +79,22 @@ const fx = {
     for (const f of this.flies) { f.t += dt; f.spin += dt * 12; }
     this.flies = this.flies.filter((f) => f.t < f.dur);
     for (const p of this.peels) {
-      p.life -= dt; p.vy += 1500 * dt;
-      p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
+      if (p.delay > 0) { p.delay -= dt; continue; }
+      p.life -= dt;
+      p.vy += 260 * dt;                                  // แรงโน้มถ่วงเบาๆ ให้โค้งนิดหน่อย
+      p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt; p.rot += p.vr * dt;
+      if (p.y > CFG.H * 0.72 && !p.done) {               // ถึงหน้ากล้อง = แปะจอ
+        p.done = true;
+        this.splats.push({
+          x: Math.max(60, Math.min(CFG.W - 60, p.x)),
+          y: Math.max(100, Math.min(CFG.H - 60, p.y + (Math.random() - 0.5) * 120)),
+          rot: p.rot, life: 0.9, max: 0.9, scale: 0.55 + Math.random() * 0.4,
+        });
+      }
     }
-    this.peels = this.peels.filter((p) => p.life > 0);
+    this.peels = this.peels.filter((p) => p.life > 0 && !p.done);
+    for (const s of this.splats) s.life -= dt;
+    this.splats = this.splats.filter((s) => s.life > 0);
     for (const s of this.sparks) { s.life -= dt; s.x += s.vx * dt; s.y += s.vy * dt; s.vy += 700 * dt; }
     this.sparks = this.sparks.filter((s) => s.life > 0);
   },
@@ -219,11 +243,22 @@ function drawFx(ctx) {
     ctx.restore();
   }
   for (const p of fx.peels) {
+    if (p.delay > 0) continue;
+    const sz = 44 * p.z;
     ctx.save();
     ctx.translate(p.x, p.y);
     ctx.rotate(p.rot);
-    ctx.globalAlpha = Math.min(1, p.life);
-    ctx.drawImage(img.banana, -20, -20, 40, 40);
+    ctx.drawImage(img.banana_peel, -sz / 2, -sz / 2, sz, sz);
+    ctx.restore();
+  }
+  for (const s of fx.splats) {
+    const t = s.life / s.max;
+    const sz = 96 * s.scale * (1 + (1 - t) * 0.06);
+    ctx.save();
+    ctx.translate(s.x, s.y);
+    ctx.rotate(s.rot);
+    ctx.globalAlpha = (t > 0.35 ? 1 : t / 0.35) * 0.92;            // ค้างบนจอแล้วค่อยจาง
+    ctx.drawImage(img.banana_peel, -sz / 2, -sz / 2, sz, sz);
     ctx.restore();
     ctx.globalAlpha = 1;
   }

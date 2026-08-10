@@ -72,7 +72,7 @@ function grabAt(x, y) {
     game.round.bananas -= lost;
     game.round.caughtCount += 1;
     game.monkey.catchPlayer();
-    fx.peelBurst();
+    fx.peelBurst(game.player.x);
     fx.shake = CFG.SHAKE_CAUGHT;
     fx.flash = 1;
     if (lost > 0) fx.text(CFG.W / 2, 300, `-${lost} กล้วย`, '#ff8b7a', 46);
@@ -142,7 +142,10 @@ function frame(now) {
     game.monkey.update(dt);
     game.player.update(dt);
     game.powerups.update(dt, game.monkey.state);
+    const before = Math.ceil(game.round.time);
     game.round.update(dt);
+    const now2 = Math.ceil(game.round.time);
+    if (now2 !== before && now2 <= 5 && now2 >= 0) sfx.tick(now2 === 0);   // นับถอยหลัง 5 วิสุดท้าย
     sfx.snoreTick(dt, game.monkey.state === STATE.SLEEPING);
     if (game.round.over) finish();
   }
