@@ -46,9 +46,14 @@ src/state.js        state machine ลิง (SLEEPING/WARNING/AWAKE/CAUGHT) + �
 src/player.js       มือผู้เล่น อินพุต คูลดาวน์
 src/powerups.js     กล้วยทอง + วิทยุ
 src/render.js       วาดฉาก/ลิง/เอฟเฟกต์/HUD
-src/audio.js        เสียงสังเคราะห์ WebAudio (ไม่มีไฟล์เสียงให้โหลด)
+src/audio.js        เอฟเฟกต์สังเคราะห์ WebAudio + เพลงประกอบไฟล์จริง (assets/audio/bgm.mp3)
 src/main.js         game loop + ผูกทุกอย่างเข้าด้วยกัน
 assets/src/*.py     สคริปต์วาด sprite
 assets/sprites/     PNG ที่เกมโหลดจริง
+assets/audio/       เพลงประกอบ (ดูเครดิต assets/audio/CREDITS.txt)
 docs/               รายงาน manual + ผลประเมิน + วิดีโอ demo
 ```
+
+## เครดิต
+
+เพลงประกอบ "Secret Base" โดย PPEAK (Preston Peak) — [FREE Action Chiptune Music Pack](https://opengameart.org/content/free-action-chiptune-music-pack) · CC-BY 4.0

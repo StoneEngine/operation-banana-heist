@@ -1,4 +1,5 @@
-// ระบบเสียงทั้งหมด สังเคราะห์ด้วย WebAudio — ไม่มีไฟล์เสียงให้โหลด เล่นได้แม้เน็ตหลุด
+// ระบบเสียง — เอฟเฟกต์ทั้งหมดสังเคราะห์ด้วย WebAudio (ไม่มีไฟล์ให้โหลด)
+// เพลงประกอบ (bgm) เป็นไฟล์จริง assets/audio/bgm.mp3 เล่นผ่าน <audio> ต่อเข้าบัส music เดียวกัน
 //
 // กฎการออกแบบเสียงของเกมนี้ (เคยพลาดมาแล้วตอนใช้ oscillator เปล่าเหมือนกันหมด = ฟังแล้วกลืนกัน):
 //   1. หนึ่งเหตุการณ์ = หนึ่ง "เครื่องดนตรี" คนละชนิด แยกด้วย 3 อย่างพร้อมกัน
@@ -7,8 +8,7 @@
 //   3. ดนตรีหลบ (duck) ทุกครั้งที่มีเสียงสำคัญ
 //   4. จำกัดเสียงซ้อน กดรัวแค่ไหนก็ไม่แตก
 //
-// ตารางเครื่องดนตรี
-//   เบสดนตรี   pizzicato bass  ซอว์+ไทรแองเกิล ผ่าน lowpass เตี้ย   80-165Hz   ดีดสั้น
+// ตารางเครื่องดนตรี (เอฟเฟกต์ที่ยังสังเคราะห์อยู่)
 //   เก็บกล้วย  marimba (ไม้)   ไซน์ + ฮาร์โมนิก x4 เบาๆ            500-900Hz  แต๊ก สั้นมาก
 //   กล้วยทอง   glockenspiel    FM bell อัตราส่วน 3.5 หางยาว         1-2kHz     กังวาน
 //   วิทยุ      lo-fi radio     สแควร์ผ่าน bandpass แคบ + ซ่า        600Hz      บิดคลื่น
@@ -48,35 +48,6 @@ function duck(depth = 0.35, hold = 0.25) {
 }
 
 // ---------------------------------------------------------------- เครื่องดนตรี
-
-/** เบสดีด (pizzicato) — ซอว์+ไทรแองเกิล ผ่าน lowpass ที่ปิดลงเร็ว = เสียงดีดสาย */
-function pluckBass(freq, dur, delay = 0, gain = 0.5) {
-  if (muted) return;
-  const a = ac();
-  const t = a.currentTime + delay;
-  const g = a.createGain();
-  const lp = a.createBiquadFilter();
-  lp.type = 'lowpass';
-  lp.frequency.setValueAtTime(1400, t);
-  lp.frequency.exponentialRampToValueAtTime(220, t + dur * 0.7);
-  lp.Q.value = 6;
-
-  for (const [type, mix, det] of [['sawtooth', 0.55, 0], ['triangle', 0.45, -6]]) {
-    const o = a.createOscillator();
-    const og = a.createGain();
-    o.type = type;
-    o.frequency.value = freq;
-    o.detune.value = det;
-    og.gain.value = mix;
-    o.connect(og).connect(lp);
-    o.start(t);
-    o.stop(t + dur + 0.05);
-  }
-  g.gain.setValueAtTime(0.0001, t);
-  g.gain.exponentialRampToValueAtTime(gain, t + 0.008);      // ดีด = attack เร็วมาก
-  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  lp.connect(g).connect(bus.music);
-}
 
 /** มาริมบา — ไซน์ + ฮาร์โมนิกที่ 4 เบาๆ, decay สั้น = เสียงไม้ */
 function marimba(freq, delay = 0, gain = 0.5) {
@@ -251,37 +222,35 @@ function monkeyVoice(kind, delay = 0) {
 }
 
 // ---------------------------------------------------------------- ดนตรี
-// เบสดีดอย่างเดียว เดินบันได A minor — พื้นหลังล้วน ไม่มีตัวโน้ตแหลมมาแย่งกับเสียงเกม
-const BASS = [110.00, 130.81, 146.83, 155.56, 164.81, 146.83, 130.81, 123.47];
-
+// เพลงประกอบจริง (ไม่ใช่ WebAudio สังเคราะห์แล้ว) — "Secret Base" โดย PPEAK, CC-BY 4.0
+// เครดิตอยู่ใน docs/manual.md / README ดู assets/audio/CREDITS.txt
 const music = {
-  on: false, step: 0, nextTime: 0, timer: null, anger: 0,
-  get stepDur() { return 0.30 * Math.max(0.66, 1 - this.anger * 0.06); },
+  el: null, src: null, on: false, anger: 0,
+
+  ensureEl() {
+    if (this.el) return;
+    const a = ac();
+    this.el = new Audio('./assets/audio/bgm.mp3');
+    this.el.loop = true;
+    this.src = a.createMediaElementSource(this.el);   // ต่อเข้าบัส music เพื่อให้ duck()/mute ใช้ได้เหมือนเดิม
+    this.src.connect(bus.music);
+  },
 
   start() {
     if (this.on || muted) return;
-    const a = ac();
+    this.ensureEl();
     this.on = true;
-    this.step = 0;
-    this.nextTime = a.currentTime + 0.08;
-    this.timer = setInterval(() => this.schedule(), 30);
+    this.el.currentTime = 0;
+    this.el.playbackRate = 1;
+    this.el.play().catch(() => {});                    // เบราว์เซอร์บาง build ต้องรอ user gesture ซ้ำ ไม่ throw
   },
   stop() {
     this.on = false;
-    clearInterval(this.timer);
-    this.timer = null;
+    if (this.el) this.el.pause();
   },
-  setAnger(v) { this.anger = v; },
-
-  schedule() {
-    if (!this.on) return;
-    const a = ac();
-    while (this.nextTime < a.currentTime + 0.15) {
-      const f = BASS[this.step % BASS.length];
-      pluckBass(f, this.stepDur * 0.9, Math.max(0, this.nextTime - a.currentTime));
-      this.nextTime += this.stepDur;
-      this.step++;
-    }
+  setAnger(v) {                                         // ยิ่งโกรธเพลงยิ่งเร่ง (แทนที่จะเปลี่ยนโน้ต)
+    this.anger = v;
+    if (this.el) this.el.playbackRate = 1 + v * 0.05;
   },
 };
 
