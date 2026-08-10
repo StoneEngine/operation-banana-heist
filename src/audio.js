@@ -195,6 +195,7 @@ function monkeyVoice(kind, delay = 0) {
     ook: [[300, 190, 0.13]],
     screech: [[520, 1400, 0.09], [1300, 650, 0.2]],
     angry: [[420, 260, 0.1], [520, 300, 0.1], [700, 180, 0.24]],
+    jiak: [[900, 1700, 0.045], [850, 1650, 0.04], [950, 1800, 0.045], [820, 1600, 0.04], [900, 1750, 0.05]],
   }[kind];
 
   for (const [from, to, dur] of syllables) {
@@ -287,9 +288,9 @@ const sfx = {
     duck(0.25, 0.3);
     monkeyVoice('ook');
   },
-  wake() {                                            // อี๊ดดด + ฉาบเบาๆ
+  wake() {                                            // เจี๊ยกๆๆๆ + ฉาบเบาๆ
     duck(0.15, 0.5);
-    monkeyVoice('screech');
+    monkeyVoice('jiak');
     noiseBurst({ dur: 0.25, gain: 0.1, filter: 'highpass', freq: 5000 });
   },
   caught() {                                          // กลองตูม + ฉาบ + ลิงด่า
