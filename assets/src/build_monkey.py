@@ -57,12 +57,14 @@ def base_body():
     return c
 
 
-def arms(c, lift=0):
-    """Arms hugging the banana pile; lift raises the hands (awake pose)."""
+def arms(c, lift=0, right=True):
+    """Arms hugging the banana pile; lift raises the hands (awake pose).
+    right=False = ไม่วาดแขนขวา เพราะเฟรม caught จะเอา arm_throw มาแทนที่ (กันลิงงอก 3 แขน)"""
     c.ellipse(10, 36 - lift, 14, 12, FUR[2])
-    c.ellipse(40, 36 - lift, 14, 12, FUR[2])
     c.ellipse(13, 42 - lift, 9, 8, SKIN[2])
-    c.ellipse(42, 42 - lift, 9, 8, SKIN[2])
+    if right:
+        c.ellipse(40, 36 - lift, 14, 12, FUR[2])
+        c.ellipse(42, 42 - lift, 9, 8, SKIN[2])
     return c
 
 
@@ -159,20 +161,30 @@ def brow_eyes_caught(c):
         c.line(33, 18 + d, 45, 13 + d, INK)
 
 
+SHOULDER = (44, 26)      # จุดหมุนแขนขวา (ตรงกับตำแหน่งแขนขวาที่ arms() เคยวาด)
+
+
+def blob(c, cx, cy, w, h, color):
+    """วาดวงรีโดยให้ (cx, cy) เป็นจุดกึ่งกลาง — pxlib รับ x,y เป็นมุมซ้ายบน"""
+    c.ellipse(round(cx - w / 2), round(cy - h / 2), w, h, color)
+
+
 def arm_throw(c, p):
-    """แขนขวาสวิงจริง: p=0 เงื้อเหนือหัว(wind-up) -> p=1 เหวี่ยงลงหน้าอก(follow-through หลังปาออกไปแล้ว)
+    """แขนขวาหมุนรอบไหล่: p=0 เงื้อขึ้นข้างหัว -> p=1 เหวี่ยงลงข้างลำตัว (follow-through)
+    หมุนรอบไหล่ไม่พาดหน้า และต้องคู่กับ arms(..., right=False) ห้ามวาดทับแขนเดิม
     ห้ามทำตากากบาท เดี๋ยวดูเหมือนตาย"""
-    sx, sy = round(lerp(44, 33, p)), round(lerp(12, 27, p))   # ต้นแขน
-    ex, ey = round(lerp(48, 27, p)), round(lerp(4, 21, p))    # ปลายแขน
-    hx, hy = round(lerp(50, 24, p)), round(lerp(1, 18, p))    # มือ
-    c.ellipse(sx, sy, 12, 11, FUR[2])
-    c.ellipse(ex, ey, 11, 10, FUR[3])
-    c.ellipse(hx, hy, 9, 8, SKIN[2])
+    sx, sy = SHOULDER
+    ang = math.radians(lerp(-62, 62, p))    # เอียงออกข้างพอให้แขนพ้นหัว ไม่งั้นตอนเงื้อจะเป็นก้อนทับหัว
+    dx, dy = math.cos(ang), math.sin(ang)
+    blob(c, sx + dx * 5, sy + dy * 5, 12, 11, FUR[2])       # ต้นแขน
+    blob(c, sx + dx * 12, sy + dy * 12, 10, 10, FUR[3])     # ปลายแขน
+    hx, hy = sx + dx * 19, sy + dy * 19
+    blob(c, hx, hy, 9, 8, SKIN[2])                          # มือ
     c.outline(INK)
-    if p < 0.45:                                              # เปลือกกล้วยยังอยู่ในมือก่อนปาออก
-        for ox, oy in ((2, -1), (5, 0), (3, 2), (6, 3)):
-            c.set(hx + ox, hy + oy, YEL_PEEL)
-            c.set(hx + ox + 1, hy + oy + 1, YEL_PEEL)
+    if p < 0.45:                                            # เปลือกกล้วยยังอยู่ในมือก่อนปาออก
+        for ox, oy in ((-1, -4), (2, -3), (0, -1), (3, -2)):
+            c.set(round(hx + ox), round(hy + oy), YEL_PEEL)
+            c.set(round(hx + ox + 1), round(hy + oy + 1), YEL_PEEL)
 
 
 def face_caught_frame(c, p):
@@ -222,7 +234,7 @@ print(f"  awake: {awake_frames[0].count_colors()} colors, {N_AWAKE} frames")
 # fps=5 * 6 เฟรม = 1.2s พอดีกับ CFG.CAUGHT_LOCK ใน config.js (ห้ามแก้ค่าใดค่าหนึ่งโดยไม่แก้อีกฝั่ง)
 N_CAUGHT = 6
 base_caught = base_body()
-arms(base_caught, 5)
+arms(base_caught, 5, right=False)      # แขนขวาปล่อยว่างไว้ให้ arm_throw วาดแทน
 finish(base_caught)
 caught_frames = [face_caught_frame(base_caught.copy(), i / (N_CAUGHT - 1)) for i in range(N_CAUGHT)]
 save_sheet(caught_frames, os.path.join(SPR, "monkey_caught.png"), cols=N_CAUGHT, scale=1,
