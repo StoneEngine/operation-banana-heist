@@ -17,8 +17,8 @@ const img = {};
 
 // เฟรม sprite sheet (ต้องตรงกับ cols/frame size ที่ build script export ไว้ — ดู assets/src/build_monkey.py, build_props.py)
 const FRAMES = {
-  monkey_awake: { w: 64, h: 64, cols: 3, count: 3 },
-  monkey_caught: { w: 64, h: 64, cols: 2, count: 2 },
+  monkey_awake: { w: 64, h: 64, cols: 8, count: 8 },
+  monkey_caught: { w: 64, h: 64, cols: 6, count: 6 },
   hand: { w: 32, h: 32, cols: 4, count: 4 },
 };
 
@@ -167,7 +167,7 @@ function draw(ctx, game) {
   const jolt = monkey.state === STATE.AWAKE ? -8 : 0;
   if (monkey.state === STATE.AWAKE || monkey.state === STATE.CAUGHT) {
     const key = monkey.state === STATE.AWAKE ? 'monkey_awake' : 'monkey_caught';
-    const fps = monkey.state === STATE.AWAKE ? 6 : 8;    // snarl loop ช้า, ขบฟันตอนโดนจับเร็วกว่า
+    const fps = monkey.state === STATE.AWAKE ? 12 : 14;  // ต้องตรงกับ fps ที่ build_monkey.py ใช้ตอน save_gif
     const elapsed = Math.max(0, monkey.totalTime - monkey.timer);
     const frame = Math.floor(elapsed * fps) % FRAMES[key].count;
     pxFrame(ctx, key, frame, MONKEY.x, MONKEY.y + breathe + jolt, MONKEY.size);

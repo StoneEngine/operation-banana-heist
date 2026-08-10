@@ -3,9 +3,16 @@
 Run:  python assets/src/build_monkey.py
 Out:  assets/sprites/monkey_*.png  +  assets/preview/monkey_*.png (scale 8)
 """
-import sys, os
+import sys, os, math
 sys.path.append(r"C:\Users\MSI KATANA\.claude\skills\pixel-art-studio\scripts")
 from pxlib import Canvas, ramp, save, save_sheet, save_gif
+
+def lerp(a, b, t):
+    return a + (b - a) * t
+
+def bounce(i, n):
+    """0 -> 1 -> 0 วนลื่นๆ ข้าม n เฟรม (ไม่กระตุก เพราะไม่มีจุดหักมุม)"""
+    return 0.5 - 0.5 * math.cos(2 * math.pi * i / n)
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 SPR = os.path.join(ROOT, "sprites")
@@ -117,38 +124,26 @@ def eyes_awake(c):
         c.line(34, 18 + d, 44, 14 + d, INK)
 
 
-def face_awake_mid(c):
+def face_awake_frame(c, t):
+    """t=0 หุบขบเขี้ยว, t=1 อ้าเต็มที่ — interpolate ต่อเนื่องให้วน smooth"""
     eyes_awake(c)
-    c.ellipse(24, 27, 16, 12, SKIN[4])
+    muzzle_h = round(lerp(11, 13, t))
+    c.ellipse(24, 27, 16, muzzle_h, SKIN[4])
     c.ellipse(29, 25, 6, 4, PINK)
-    c.ellipse(26, 30, 12, 8, INK)
-    c.rect(28, 31, 2, 3, WHITE)            # fangs
-    c.rect(34, 31, 2, 3, WHITE)
-    c.ellipse(29, 35, 6, 3, PINK)
-    return c
-
-
-def face_awake_open(c):
-    """ขากรรไกรอ้าเต็มที่"""
-    eyes_awake(c)
-    c.ellipse(24, 27, 16, 13, SKIN[4])
-    c.ellipse(29, 25, 6, 4, PINK)
-    c.ellipse(25, 29, 14, 11, INK)
-    c.rect(27, 33, 2, 4, WHITE)             # fangs (ยาวขึ้นตอนอ้า)
-    c.rect(35, 33, 2, 4, WHITE)
-    c.ellipse(28, 37, 8, 4, PINK)
-    return c
-
-
-def face_awake_clench(c):
-    """ขากรรไกรหุบ ขบเขี้ยว"""
-    eyes_awake(c)
-    c.ellipse(24, 27, 16, 11, SKIN[4])
-    c.ellipse(29, 25, 6, 4, PINK)
-    c.ellipse(27, 29, 10, 5, INK)
-    c.rect(28, 29, 2, 3, WHITE)
-    c.rect(34, 29, 2, 3, WHITE)
-    c.rect(30, 30, 4, 2, WHITE)             # ฟันหน้าขบแน่น
+    inner_w = round(lerp(10, 14, t))
+    inner_h = round(lerp(5, 11, t))
+    inner_x = 24 + (16 - inner_w) // 2
+    c.ellipse(inner_x, 29, inner_w, inner_h, INK)
+    fang_y = round(lerp(29, 33, t))
+    fang_h = round(lerp(3, 4, t))
+    fang_x = round(lerp(28, 27, t))
+    c.rect(fang_x, fang_y, 2, fang_h, WHITE)
+    c.rect(round(lerp(34, 35, t)), fang_y, 2, fang_h, WHITE)
+    if t < 0.3:
+        c.rect(30, fang_y, 4, 2, WHITE)         # ฟันหน้าขบแน่นตอนหุบ
+    if t > 0.45:
+        tongue_y = round(lerp(35, 37, (t - 0.45) / 0.55))
+        c.ellipse(28, tongue_y, 7, 3, PINK)      # ลิ้นโผล่ตอนอ้า
     return c
 
 
@@ -175,29 +170,25 @@ def arm_peel(c, dx=0, dy=0):
         c.set(x + 1 + dx, y + 1 + dy, YEL_PEEL)
 
 
-def face_caught_shout(c):
+def face_caught_frame(c, t, jitter):
+    """t=0 ขบฟันแค้น(grind), t=1 อ้าปากตะโกน(shout) — แขนสั่นตาม jitter ทุกเฟรม"""
     brow_eyes_caught(c)
     c.ellipse(24, 27, 16, 12, SKIN[4])
     c.ellipse(29, 25, 6, 4, PINK)
-    c.ellipse(25, 29, 14, 10, INK)
-    c.rect(28, 30, 2, 3, WHITE)
-    c.rect(35, 30, 2, 3, WHITE)
-    c.ellipse(28, 34, 8, 4, PINK)
-    arm_peel(c)
-    return c
-
-
-def face_caught_grind(c):
-    """ขบฟันแค้นๆ + แขนสั่นนิดหน่อย"""
-    brow_eyes_caught(c)
-    c.ellipse(24, 27, 16, 12, SKIN[4])
-    c.ellipse(29, 25, 6, 4, PINK)
-    c.ellipse(26, 29, 12, 6, INK)
-    c.rect(27, 29, 2, 3, WHITE)
-    c.rect(29, 29, 2, 3, WHITE)
-    c.rect(33, 29, 2, 3, WHITE)
-    c.rect(35, 29, 2, 3, WHITE)
-    arm_peel(c, dx=1, dy=-1)
+    inner_w = round(lerp(12, 14, t))
+    inner_h = round(lerp(6, 10, t))
+    inner_x = 24 + (16 - inner_w) // 2
+    c.ellipse(inner_x, 29, inner_w, inner_h, INK)
+    if t < 0.5:
+        for fx in (27, 29, 33, 35):             # แถวฟันขบตอนโกรธ
+            c.rect(fx, 29, 2, 3, WHITE)
+    else:
+        c.rect(28, 30, 2, 3, WHITE)
+        c.rect(35, 30, 2, 3, WHITE)
+        tongue_y = round(lerp(32, 34, (t - 0.5) / 0.5))
+        c.ellipse(28, tongue_y, 8, 4, PINK)
+    dx, dy = jitter
+    arm_peel(c, dx=dx, dy=dy)
     return c
 
 
@@ -215,29 +206,27 @@ for name, (face, lift) in MOODS.items():
     save(c, os.path.join(PRE, f"monkey_{name}.png"), scale=6)
     print(f"  {name}: {c.count_colors()} colors")
 
-# awake: 3-เฟรม snarl loop (ขากรรไกรอ้า-หุบ)
+# awake: 8-เฟรม snarl loop ต่อเนื่อง (หุบ->อ้าเต็มที่->หุบ)
+N_AWAKE = 8
 base_awake = base_body()
 arms(base_awake, 3)
 finish(base_awake)
-awake_frames = [
-    face_awake_mid(base_awake.copy()),
-    face_awake_open(base_awake.copy()),
-    face_awake_clench(base_awake.copy()),
-]
-save_sheet(awake_frames, os.path.join(SPR, "monkey_awake.png"), cols=3, scale=1,
-           manifest=os.path.join(SPR, "monkey_awake.json"), fps=6, name="snarl")
-save_gif(awake_frames, os.path.join(PRE, "monkey_awake.gif"), scale=6, fps=6)
-print(f"  awake: {awake_frames[0].count_colors()} colors, 3 frames")
+awake_frames = [face_awake_frame(base_awake.copy(), bounce(i, N_AWAKE)) for i in range(N_AWAKE)]
+save_sheet(awake_frames, os.path.join(SPR, "monkey_awake.png"), cols=N_AWAKE, scale=1,
+           manifest=os.path.join(SPR, "monkey_awake.json"), fps=12, name="snarl")
+save_gif(awake_frames, os.path.join(PRE, "monkey_awake.gif"), scale=6, fps=12)
+print(f"  awake: {awake_frames[0].count_colors()} colors, {N_AWAKE} frames")
 
-# caught: 2-เฟรม ตะโกน + ขบฟันแค้น
+# caught: 6-เฟรม ขบฟันแค้น<->อ้าตะโกน ต่อเนื่อง + แขนสั่นทุกเฟรม
+N_CAUGHT = 6
 base_caught = base_body()
 arms(base_caught, 5)
 finish(base_caught)
 caught_frames = [
-    face_caught_shout(base_caught.copy()),
-    face_caught_grind(base_caught.copy()),
+    face_caught_frame(base_caught.copy(), bounce(i, N_CAUGHT), jitter=((1, -1) if i % 2 else (0, 0)))
+    for i in range(N_CAUGHT)
 ]
-save_sheet(caught_frames, os.path.join(SPR, "monkey_caught.png"), cols=2, scale=1,
-           manifest=os.path.join(SPR, "monkey_caught.json"), fps=8, name="grind")
-save_gif(caught_frames, os.path.join(PRE, "monkey_caught.gif"), scale=6, fps=8)
-print(f"  caught: {caught_frames[0].count_colors()} colors, 2 frames")
+save_sheet(caught_frames, os.path.join(SPR, "monkey_caught.png"), cols=N_CAUGHT, scale=1,
+           manifest=os.path.join(SPR, "monkey_caught.json"), fps=14, name="grind")
+save_gif(caught_frames, os.path.join(PRE, "monkey_caught.gif"), scale=6, fps=14)
+print(f"  caught: {caught_frames[0].count_colors()} colors, {N_CAUGHT} frames")
