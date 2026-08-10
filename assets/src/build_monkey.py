@@ -161,70 +161,31 @@ def brow_eyes_caught(c):
         c.line(33, 18 + d, 45, 13 + d, INK)
 
 
-SHOULDER = (44, 26)      # จุดหมุนแขนขวา (ตรงกับตำแหน่งแขนขวาที่ arms() เคยวาด)
-
-
-def blob(c, cx, cy, w, h, color):
-    """วาดวงรีโดยให้ (cx, cy) เป็นจุดกึ่งกลาง — pxlib รับ x,y เป็นมุมซ้ายบน"""
-    c.ellipse(round(cx - w / 2), round(cy - h / 2), w, h, color)
-
-
-def arm_throw(c, p):
-    """แขนขวาหมุนรอบไหล่: p=0 เงื้อขึ้นข้างหัว -> p=1 เหวี่ยงลงข้างลำตัว (follow-through)
-    ต้องคู่กับ arms(..., right=False) ห้ามวาดทับแขนเดิม (ไม่งั้นลิงมี 3 แขน)
-    ห้ามทำตากากบาท เดี๋ยวดูเหมือนตาย"""
-    sx, sy = SHOULDER
-    ang = math.radians(lerp(-62, 62, p))    # เอียงออกข้างพอให้แขนพ้นหัว ไม่งั้นตอนเงื้อจะเป็นก้อนทับหัว
-    dx, dy = math.cos(ang), math.sin(ang)
-    up = (sx + dx * 7, sy + dy * 7)         # ต้นแขน
-    fo = (sx + dx * 15, sy + dy * 15)       # ปลายแขน
-    hx, hy = sx + dx * 23, sy + dy * 23     # มือ (ยื่นพ้นตัวชัดๆ ไม่งั้นดูเป็นตอ)
-
-    if 0.2 < p < 0.9:                       # เส้นแรงเหวี่ยงตามหลังมือ = ตัวที่ทำให้ "ดุ" ในอนิเมชัน 2D
-        for k in (1, 2, 3):
-            a = ang - math.radians(15 * k)
-            for r in (19, 23):
-                c.set(round(sx + math.cos(a) * r), round(sy + math.sin(a) * r), WHITE)
-
-    # เส้นคั่นในตัว: วาด INK ใหญ่กว่า 2px รองก่อนทุกท่อน แล้วค่อยลงสีทับ
-    # (c.outline() ตีเส้นแค่ขอบที่ติดพื้นโปร่งใส ตรงที่แขนทับหัวจะไม่มีเส้น กลายเป็นก้อนเนื้อเดียวกับหัว)
-    blob(c, *up, 11, 11, INK)
-    blob(c, *fo, 10, 10, INK)
-    blob(c, hx, hy, 11, 10, INK)
-    blob(c, *up, 9, 9, FUR[1])              # ใช้เฉดเข้มกว่าหัว (FUR[3]) ให้แยกออกจากกัน
-    blob(c, *fo, 8, 8, FUR[2])
-    blob(c, hx, hy, 9, 8, SKIN[2])
-    c.set(round(hx + dx * 3), round(hy + dy * 3 - 2), INK)   # ร่องนิ้ว ให้อ่านออกว่าเป็นมือกำ
-    c.set(round(hx + dx * 3), round(hy + dy * 3 + 1), INK)
-    c.outline(INK)
-    if p < 0.45:                            # เปลือกกล้วยยังอยู่ในมือก่อนปาออก
-        px_, py_ = hx + dx * 4, hy + dy * 4
-        for ox, oy in ((-1, -3), (2, -2), (0, 0), (3, -1)):
-            c.set(round(px_ + ox), round(py_ + oy), YEL_PEEL)
-            c.set(round(px_ + ox + 1), round(py_ + oy + 1), YEL_PEEL)
-
-
-def face_caught_frame(c, p):
-    """p=0 เงื้อ+ขบฟันแค้น -> p=1 เหวี่ยงปาแล้ว+อ้าปากตะโกน (one-shot ไม่วน สอดคล้องกับ arm_throw)"""
+def face_caught(c):
+    """โกรธจัด ตะโกน + เงื้อแขนปาเปลือกกล้วย (ห้ามทำตากากบาท เดี๋ยวดูเหมือนตาย)"""
     brow_eyes_caught(c)
     c.ellipse(24, 27, 16, 12, SKIN[4])
     c.ellipse(29, 25, 6, 4, PINK)
-    if p < 0.45:
-        c.ellipse(26, 29, 12, 6, INK)
-        for fx_ in (27, 29, 33, 35):            # แถวฟันขบตอนเงื้อ
-            c.rect(fx_, 29, 2, 3, WHITE)
-    else:
-        c.ellipse(25, 29, 14, 10, INK)           # อ้าปากตะโกนตอนปาออกไปแล้ว
-        c.rect(28, 30, 2, 3, WHITE)
-        c.rect(35, 30, 2, 3, WHITE)
-        c.ellipse(28, 34, 8, 4, PINK)
-    arm_throw(c, p)
+    c.ellipse(25, 29, 14, 10, INK)
+    c.rect(28, 30, 2, 3, WHITE)
+    c.rect(35, 30, 2, 3, WHITE)
+    c.ellipse(28, 34, 8, 4, PINK)
+
+    # แขนขวาเงื้อขึ้นเหนือหัว ถือเปลือกกล้วยเตรียมปา
+    c.ellipse(44, 12, 12, 11, FUR[2])
+    c.ellipse(48, 4, 11, 10, FUR[3])
+    c.ellipse(50, 1, 9, 8, SKIN[2])
+    c.outline(INK)
+    for x, y in ((52, 0), (55, 1), (53, 3), (56, 4)):
+        c.set(x, y, YEL_PEEL)
+        c.set(x + 1, y + 1, YEL_PEEL)
     return c
 
 
 MOODS = {
     "sleep": (face_sleep, 0),
     "warn": (face_warn, 0),
+    "caught": (face_caught, 5),
 }
 
 for name, (face, lift) in MOODS.items():
@@ -246,15 +207,3 @@ save_sheet(awake_frames, os.path.join(SPR, "monkey_awake.png"), cols=N_AWAKE, sc
            manifest=os.path.join(SPR, "monkey_awake.json"), fps=12, name="snarl")
 save_gif(awake_frames, os.path.join(PRE, "monkey_awake.gif"), scale=6, fps=12)
 print(f"  awake: {awake_frames[0].count_colors()} colors, {N_AWAKE} frames")
-
-# caught: 6-เฟรม ขว้างเปลือกกล้วยจริง one-shot (เงื้อ -> เหวี่ยงปา -> follow-through)
-# fps=5 * 6 เฟรม = 1.2s พอดีกับ CFG.CAUGHT_LOCK ใน config.js (ห้ามแก้ค่าใดค่าหนึ่งโดยไม่แก้อีกฝั่ง)
-N_CAUGHT = 6
-base_caught = base_body()
-arms(base_caught, 5, right=False)      # แขนขวาปล่อยว่างไว้ให้ arm_throw วาดแทน
-finish(base_caught)
-caught_frames = [face_caught_frame(base_caught.copy(), i / (N_CAUGHT - 1)) for i in range(N_CAUGHT)]
-save_sheet(caught_frames, os.path.join(SPR, "monkey_caught.png"), cols=N_CAUGHT, scale=1,
-           manifest=os.path.join(SPR, "monkey_caught.json"), fps=5, name="throw")
-save_gif(caught_frames, os.path.join(PRE, "monkey_caught.gif"), scale=6, fps=5)
-print(f"  caught: {caught_frames[0].count_colors()} colors, {N_CAUGHT} frames")
