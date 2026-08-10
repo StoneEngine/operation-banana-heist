@@ -4,7 +4,16 @@ https://opengameart.org/content/free-action-chiptune-music-pack
 License: CC-BY 4.0 — https://creativecommons.org/licenses/by/4.0/
 Re-encoded to 128kbps mp3 for file size.
 
-monkey_ook.mp3 / monkey_jiak.mp3 / monkey_angry.mp3 = "Monkey Sounds" by AntumDeluge (for Stendhal)
-https://opengameart.org/content/monkey-sounds
-License: CC-BY 3.0 — https://creativecommons.org/licenses/by/3.0/
-Re-encoded to 96kbps mp3.
+เสียงลิงจริงจากสัตว์จริง (SoundBible.com, ไม่ใช่คนเลียนเสียงแล้ว):
+
+monkey_ook.mp3 = ตัดจาก "Gibbon Monkey" by Mike Koenig
+https://soundbible.com/2145-Gibbon-Monkey.html · License: Attribution 3.0
+Credit: "Gibbon Monkey" by Mike Koenig (SoundBible.com)
+
+monkey_jiak.mp3 = "Chimpanzee" by Mike Koenig
+https://soundbible.com/1188-Chimpanzee.html · License: Attribution 3.0
+Credit: "Chimpanzee" by Mike Koenig (SoundBible.com)
+
+monkey_angry.mp3 = "Gorilla" by Mike Koenig
+https://soundbible.com/1149-Gorilla.html · License: Public Domain
+Credit: "Gorilla" by Mike Koenig (SoundBible.com)

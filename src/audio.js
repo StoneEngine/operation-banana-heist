@@ -186,8 +186,8 @@ function brass(freq, delay = 0, dur = 0.5, gain = 0.3) {
   lp.connect(g).connect(bus.sfx);
 }
 
-/** เสียงร้องลิง — ตัวอย่างเสียงจริง (มนุษย์เลียนเสียงลิง, CC-BY 3.0 AntumDeluge)
- * ไม่ใช่ oscillator สังเคราะห์แล้ว เพราะเสียงเดิมฟังดูไม่สมจริง ดูเครดิตที่ assets/audio/CREDITS.txt */
+/** เสียงร้องลิง — บันทึกเสียงสัตว์จริง (gibbon/chimp/gorilla, Mike Koenig, SoundBible.com)
+ * ไม่ใช่ oscillator สังเคราะห์ และไม่ใช่คนเลียนเสียงแล้ว ดูเครดิตที่ assets/audio/CREDITS.txt */
 const VOICE_FILES = { ook: 'monkey_ook.mp3', screech: 'monkey_jiak.mp3', jiak: 'monkey_jiak.mp3', angry: 'monkey_angry.mp3' };
 const voiceEls = {};
 

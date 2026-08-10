@@ -57,4 +57,4 @@ docs/               รายงาน manual + ผลประเมิน + �
 ## เครดิต
 
 เพลงประกอบ "Secret Base" โดย PPEAK (Preston Peak) — [FREE Action Chiptune Music Pack](https://opengameart.org/content/free-action-chiptune-music-pack) · CC-BY 4.0
-เสียงลิง โดย AntumDeluge — [Monkey Sounds](https://opengameart.org/content/monkey-sounds) · CC-BY 3.0
+เสียงลิง (สัตว์จริง) โดย Mike Koenig — [Gibbon](https://soundbible.com/2145-Gibbon-Monkey.html) / [Chimpanzee](https://soundbible.com/1188-Chimpanzee.html) (Attribution 3.0) · [Gorilla](https://soundbible.com/1149-Gorilla.html) (Public Domain) — SoundBible.com
