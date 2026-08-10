@@ -5,7 +5,7 @@ Out:  assets/sprites/{banana,banana_gold,basket,hand,radio,bg}.png
 """
 import sys, os
 sys.path.append(r"C:\Users\MSI KATANA\.claude\skills\pixel-art-studio\scripts")
-from pxlib import Canvas, ramp, save
+from pxlib import Canvas, ramp, save, save_sheet, save_gif
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 SPR = os.path.join(ROOT, "sprites")
@@ -71,15 +71,22 @@ def basket():
     return c
 
 
-def hand():
-    """Thief's hand reaching up, palm open."""
+def hand_frame(i):
+    """เฟรมมือ 0-3: แบเปิด -> นิ้วเริ่มงอ -> งอมากขึ้น -> กำรอบกล้วยแน่น (sync กับ player.reach)"""
     c = Canvas(32, 32)
     c.ellipse(8, 12, 17, 15, SKIN[3])         # palm
-    for i, (x, top) in enumerate(((9, 5), (13, 3), (17, 3), (21, 5))):
-        c.rect(x, top, 3, 12, SKIN[3])
-        c.set(x + 1, top, "#e8bd8e")
-    c.rect(5, 15, 5, 4, SKIN[2])              # thumb
-    c.rect(4, 16, 3, 5, SKIN[2])
+    if i == 3:
+        c.ellipse(12, 9, 8, 7, YEL[3])        # กล้วยในกำมือ
+        c.ellipse(13, 8, 4, 3, YEL[4])
+    curl = (0, 3, 6, 9)[i]
+    for x, top in ((9, 5), (13, 3), (17, 3), (21, 5)):
+        ftop = top + curl
+        fh = max(4, 12 - curl)
+        c.rect(x, ftop, 3, fh, SKIN[3])
+        c.set(x + 1, ftop, "#e8bd8e")
+    tdx = i                                    # หัวแม่มือขยับเข้าปิดล้อมตอนกำ
+    c.rect(5 + tdx, 15, 5, 4, SKIN[2])        # thumb
+    c.rect(4 + tdx, 16, 3, 5, SKIN[2])
     c.rect(10, 25, 13, 7, "#5a3a6b")          # sleeve
     c.rect(10, 25, 13, 2, "#7a5290")
     c.rect(9, 14, 2, 9, "#e8bd8e")            # single soft highlight, light top-left
@@ -107,11 +114,17 @@ items = {
     "banana_gold": banana("#ffd21f", "#fff8c2", "#c8860a", sparkle=True),
     "banana_peel": peel(),
     "basket": basket(),
-    "hand": hand(),
     "radio": radio(),
 }
 for name, c in items.items():
     save(c, os.path.join(SPR, f"{name}.png"))
     save(c, os.path.join(PRE, f"{name}.png"), scale=8)
+
+# มือ: 4-เฟรม sheet (แบ -> กำ) แทน PNG นิ่งอันเดียว
+hand_frames = [hand_frame(i) for i in range(4)]
+save_sheet(hand_frames, os.path.join(SPR, "hand.png"), cols=4, scale=1,
+           manifest=os.path.join(SPR, "hand.json"), fps=10, name="grab")
+save_gif(hand_frames, os.path.join(PRE, "hand.gif"), scale=8, fps=10)
+print(f"  hand: {hand_frames[0].count_colors()} colors, 4 frames")
 
 # หมายเหตุ: ฉากหลัง (bg.png) ย้ายไปอยู่ assets/src/build_bg.py แล้ว อย่าวาดซ้ำที่นี่

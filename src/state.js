@@ -29,6 +29,7 @@ class Monkey {
   enter(state) {
     this.state = state;
     this.timer = this.duration(state);
+    this.totalTime = this.timer;   // เก็บไว้คำนวณ elapsed ให้ sprite sheet ปาก (ดู render.js pxFrame)
     if (state === STATE.WARNING) {
       // หลอกตื่น: เข้า WARNING แล้วกลับไปหลับ ไม่ตื่นจริง
       const p = CFG.FAKE_WAKE_BASE + this.anger * CFG.FAKE_WAKE_PER_ANGER;

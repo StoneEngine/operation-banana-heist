@@ -1,0 +1,17 @@
+{
+  "image": "monkey_caught.png",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "columns": 2,
+  "rows": 1,
+  "count": 2,
+  "scale": 1,
+  "animations": {
+    "grind": {
+      "from": 0,
+      "to": 1,
+      "fps": 8,
+      "loop": true
+    }
+  }
+}

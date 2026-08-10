@@ -5,7 +5,7 @@ Out:  assets/sprites/monkey_*.png  +  assets/preview/monkey_*.png (scale 8)
 """
 import sys, os
 sys.path.append(r"C:\Users\MSI KATANA\.claude\skills\pixel-art-studio\scripts")
-from pxlib import Canvas, ramp, save
+from pxlib import Canvas, ramp, save, save_sheet, save_gif
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 SPR = os.path.join(ROOT, "sprites")
@@ -105,18 +105,20 @@ def face_warn(c):
     return c
 
 
-def face_awake(c):
-    # wide angry eyes
+def eyes_awake(c):
+    # wide angry eyes + hard angled brows (shared across snarl frames)
     c.ellipse(21, 18, 9, 9, WHITE)
     c.ellipse(34, 18, 9, 9, WHITE)
     c.ellipse(24, 21, 5, 5, INK)
     c.ellipse(36, 21, 5, 5, INK)
     c.set(25, 22, WHITE); c.set(37, 22, WHITE)
-    # hard angled brows
     for d in range(3):
         c.line(20, 14 + d, 30, 18 + d, INK)
         c.line(34, 18 + d, 44, 14 + d, INK)
-    # snarl
+
+
+def face_awake_mid(c):
+    eyes_awake(c)
     c.ellipse(24, 27, 16, 12, SKIN[4])
     c.ellipse(29, 25, 6, 4, PINK)
     c.ellipse(26, 30, 12, 8, INK)
@@ -126,42 +128,82 @@ def face_awake(c):
     return c
 
 
-def face_caught(c):
-    """โกรธจัด ตะโกน + เงื้อแขนปาเปลือกกล้วย (ห้ามทำตากากบาท เดี๋ยวดูเหมือนตาย)"""
-    # ตาเบิ่งโพลง ม่านตาเล็ก = โมโหสุดขีด
+def face_awake_open(c):
+    """ขากรรไกรอ้าเต็มที่"""
+    eyes_awake(c)
+    c.ellipse(24, 27, 16, 13, SKIN[4])
+    c.ellipse(29, 25, 6, 4, PINK)
+    c.ellipse(25, 29, 14, 11, INK)
+    c.rect(27, 33, 2, 4, WHITE)             # fangs (ยาวขึ้นตอนอ้า)
+    c.rect(35, 33, 2, 4, WHITE)
+    c.ellipse(28, 37, 8, 4, PINK)
+    return c
+
+
+def face_awake_clench(c):
+    """ขากรรไกรหุบ ขบเขี้ยว"""
+    eyes_awake(c)
+    c.ellipse(24, 27, 16, 11, SKIN[4])
+    c.ellipse(29, 25, 6, 4, PINK)
+    c.ellipse(27, 29, 10, 5, INK)
+    c.rect(28, 29, 2, 3, WHITE)
+    c.rect(34, 29, 2, 3, WHITE)
+    c.rect(30, 30, 4, 2, WHITE)             # ฟันหน้าขบแน่น
+    return c
+
+
+def brow_eyes_caught(c):
+    # ตาเบิ่งโพลง ม่านตาเล็ก = โมโหสุดขีด + คิ้วชนกันกลางหน้าผาก (shared across caught frames)
     c.ellipse(21, 17, 10, 10, WHITE)
     c.ellipse(34, 17, 10, 10, WHITE)
     c.ellipse(24, 20, 4, 4, INK)
     c.ellipse(37, 20, 4, 4, INK)
     c.set(25, 21, WHITE); c.set(38, 21, WHITE)
-    # คิ้วชนกันกลางหน้าผาก
     for d in range(3):
         c.line(19, 13 + d, 31, 18 + d, INK)
         c.line(33, 18 + d, 45, 13 + d, INK)
-    # ปากอ้าตะโกน
+
+
+def arm_peel(c, dx=0, dy=0):
+    """แขนขวาเงื้อขึ้นเหนือหัว ถือเปลือกกล้วยเตรียมปา (ห้ามทำตากากบาท เดี๋ยวดูเหมือนตาย)"""
+    c.ellipse(44 + dx, 12 + dy, 12, 11, FUR[2])          # ต้นแขน
+    c.ellipse(48 + dx, 4 + dy, 11, 10, FUR[3])           # ปลายแขน
+    c.ellipse(50 + dx, 1 + dy, 9, 8, SKIN[2])            # มือ
+    c.outline(INK)
+    for x, y in ((52, 0), (55, 1), (53, 3), (56, 4)):    # เปลือกกล้วยในมือ
+        c.set(x + dx, y + dy, YEL_PEEL)
+        c.set(x + 1 + dx, y + 1 + dy, YEL_PEEL)
+
+
+def face_caught_shout(c):
+    brow_eyes_caught(c)
     c.ellipse(24, 27, 16, 12, SKIN[4])
     c.ellipse(29, 25, 6, 4, PINK)
     c.ellipse(25, 29, 14, 10, INK)
     c.rect(28, 30, 2, 3, WHITE)
     c.rect(35, 30, 2, 3, WHITE)
     c.ellipse(28, 34, 8, 4, PINK)
+    arm_peel(c)
+    return c
 
-    # แขนขวาเงื้อขึ้นเหนือหัว ถือเปลือกกล้วยเตรียมปา
-    c.ellipse(44, 12, 12, 11, FUR[2])          # ต้นแขน
-    c.ellipse(48, 4, 11, 10, FUR[3])           # ปลายแขน
-    c.ellipse(50, 1, 9, 8, SKIN[2])            # มือ
-    c.outline(INK)
-    for x, y in ((52, 0), (55, 1), (53, 3), (56, 4)):   # เปลือกกล้วยในมือ
-        c.set(x, y, YEL_PEEL)
-        c.set(x + 1, y + 1, YEL_PEEL)
+
+def face_caught_grind(c):
+    """ขบฟันแค้นๆ + แขนสั่นนิดหน่อย"""
+    brow_eyes_caught(c)
+    c.ellipse(24, 27, 16, 12, SKIN[4])
+    c.ellipse(29, 25, 6, 4, PINK)
+    c.ellipse(26, 29, 12, 6, INK)
+    c.rect(27, 29, 2, 3, WHITE)
+    c.rect(29, 29, 2, 3, WHITE)
+    c.rect(33, 29, 2, 3, WHITE)
+    c.rect(35, 29, 2, 3, WHITE)
+    arm_peel(c, dx=1, dy=-1)
     return c
 
 
 MOODS = {
     "sleep": (face_sleep, 0),
     "warn": (face_warn, 0),
-    "awake": (face_awake, 3),
-    "caught": (face_caught, 5),
 }
 
 for name, (face, lift) in MOODS.items():
@@ -172,3 +214,30 @@ for name, (face, lift) in MOODS.items():
     save(c, os.path.join(SPR, f"monkey_{name}.png"))
     save(c, os.path.join(PRE, f"monkey_{name}.png"), scale=6)
     print(f"  {name}: {c.count_colors()} colors")
+
+# awake: 3-เฟรม snarl loop (ขากรรไกรอ้า-หุบ)
+base_awake = base_body()
+arms(base_awake, 3)
+finish(base_awake)
+awake_frames = [
+    face_awake_mid(base_awake.copy()),
+    face_awake_open(base_awake.copy()),
+    face_awake_clench(base_awake.copy()),
+]
+save_sheet(awake_frames, os.path.join(SPR, "monkey_awake.png"), cols=3, scale=1,
+           manifest=os.path.join(SPR, "monkey_awake.json"), fps=6, name="snarl")
+save_gif(awake_frames, os.path.join(PRE, "monkey_awake.gif"), scale=6, fps=6)
+print(f"  awake: {awake_frames[0].count_colors()} colors, 3 frames")
+
+# caught: 2-เฟรม ตะโกน + ขบฟันแค้น
+base_caught = base_body()
+arms(base_caught, 5)
+finish(base_caught)
+caught_frames = [
+    face_caught_shout(base_caught.copy()),
+    face_caught_grind(base_caught.copy()),
+]
+save_sheet(caught_frames, os.path.join(SPR, "monkey_caught.png"), cols=2, scale=1,
+           manifest=os.path.join(SPR, "monkey_caught.json"), fps=8, name="grind")
+save_gif(caught_frames, os.path.join(PRE, "monkey_caught.gif"), scale=6, fps=8)
+print(f"  caught: {caught_frames[0].count_colors()} colors, 2 frames")

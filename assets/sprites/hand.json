@@ -1,0 +1,17 @@
+{
+  "image": "hand.png",
+  "frameWidth": 32,
+  "frameHeight": 32,
+  "columns": 4,
+  "rows": 1,
+  "count": 4,
+  "scale": 1,
+  "animations": {
+    "grab": {
+      "from": 0,
+      "to": 3,
+      "fps": 10,
+      "loop": true
+    }
+  }
+}

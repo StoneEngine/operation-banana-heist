@@ -15,6 +15,13 @@ const SPRITES = {
 
 const img = {};
 
+// เฟรม sprite sheet (ต้องตรงกับ cols/frame size ที่ build script export ไว้ — ดู assets/src/build_monkey.py, build_props.py)
+const FRAMES = {
+  monkey_awake: { w: 64, h: 64, cols: 3, count: 3 },
+  monkey_caught: { w: 64, h: 64, cols: 2, count: 2 },
+  hand: { w: 32, h: 32, cols: 4, count: 4 },
+};
+
 function loadSprites() {
   const jobs = Object.entries(SPRITES).map(([key, file]) => new Promise((res, rej) => {
     const im = new Image();
@@ -106,6 +113,16 @@ function px(ctx, key, x, y, size) {
   ctx.drawImage(im, Math.round(x), Math.round(y), size, size * (im.height / im.width));
 }
 
+/** วาด 1 เฟรมจาก sprite sheet (crop ตาม FRAMES[key]) */
+function pxFrame(ctx, key, frameIndex, x, y, size) {
+  const im = img[key];
+  const f = FRAMES[key];
+  const col = frameIndex % f.cols;
+  const row = Math.floor(frameIndex / f.cols);
+  const destH = size * (f.h / f.w);
+  ctx.drawImage(im, col * f.w, row * f.h, f.w, f.h, Math.round(x), Math.round(y), size, destH);
+}
+
 function label(ctx, text, x, y, { size = 26, color = '#fff1e0', align = 'left', weight = 700 } = {}) {
   ctx.font = `${weight} ${size}px "Segoe UI", Tahoma, sans-serif`;
   ctx.textAlign = align;
@@ -148,9 +165,16 @@ function draw(ctx, game) {
   // ลิง (หายใจขึ้นลงตอนหลับ)
   const breathe = monkey.state === STATE.SLEEPING ? Math.sin(time * 2.2) * 5 : 0;
   const jolt = monkey.state === STATE.AWAKE ? -8 : 0;
-  const key = 'monkey_' + monkey.state.toLowerCase().replace('sleeping', 'sleep')
-    .replace('warning', 'warn').replace('awake', 'awake').replace('caught', 'caught');
-  px(ctx, key, MONKEY.x, MONKEY.y + breathe + jolt, MONKEY.size);
+  if (monkey.state === STATE.AWAKE || monkey.state === STATE.CAUGHT) {
+    const key = monkey.state === STATE.AWAKE ? 'monkey_awake' : 'monkey_caught';
+    const fps = monkey.state === STATE.AWAKE ? 6 : 8;    // snarl loop ช้า, ขบฟันตอนโดนจับเร็วกว่า
+    const elapsed = Math.max(0, monkey.totalTime - monkey.timer);
+    const frame = Math.floor(elapsed * fps) % FRAMES[key].count;
+    pxFrame(ctx, key, frame, MONKEY.x, MONKEY.y + breathe + jolt, MONKEY.size);
+  } else {
+    const key = 'monkey_' + monkey.state.toLowerCase().replace('sleeping', 'sleep').replace('warning', 'warn');
+    px(ctx, key, MONKEY.x, MONKEY.y + breathe + jolt, MONKEY.size);
+  }
 
   drawPile(ctx, round, time);
   drawMood(ctx, monkey, time);
@@ -177,7 +201,8 @@ function draw(ctx, game) {
   // ตะกร้า + มือ
   px(ctx, 'basket', BASKET.x, BASKET.y, BASKET.size);
   const hy = player.handY - 128;
-  px(ctx, 'hand', player.x - 64, hy, 128);
+  const handFrame = Math.min(FRAMES.hand.count - 1, Math.floor(player.reach * FRAMES.hand.count));
+  pxFrame(ctx, 'hand', handFrame, player.x - 64, hy, 128);
 
   drawFx(ctx);
   drawHud(ctx, game);

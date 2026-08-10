@@ -1,0 +1,17 @@
+{
+  "image": "monkey_awake.png",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "columns": 3,
+  "rows": 1,
+  "count": 3,
+  "scale": 1,
+  "animations": {
+    "snarl": {
+      "from": 0,
+      "to": 2,
+      "fps": 6,
+      "loop": true
+    }
+  }
+}
