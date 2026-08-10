@@ -15,9 +15,8 @@ const SPRITES = {
 
 const img = {};
 
-// เฟรม sprite sheet (ต้องตรงกับ cols/frame size ที่ build script export ไว้ — ดู assets/src/build_monkey.py, build_props.py)
+// เฟรม sprite sheet (ต้องตรงกับ cols/frame size ที่ build script export ไว้ — ดู assets/src/build_props.py)
 const FRAMES = {
-  monkey_awake: { w: 64, h: 64, cols: 8, count: 8 },
   hand: { w: 32, h: 32, cols: 4, count: 4 },
 };
 
@@ -164,16 +163,9 @@ function draw(ctx, game) {
   // ลิง (หายใจขึ้นลงตอนหลับ)
   const breathe = monkey.state === STATE.SLEEPING ? Math.sin(time * 2.2) * 5 : 0;
   const jolt = monkey.state === STATE.AWAKE ? -8 : 0;
-  if (monkey.state === STATE.AWAKE) {
-    const fps = 12;
-    const elapsed = Math.max(0, monkey.totalTime - monkey.timer);
-    const frame = Math.floor(elapsed * fps) % FRAMES.monkey_awake.count;
-    pxFrame(ctx, 'monkey_awake', frame, MONKEY.x, MONKEY.y + breathe + jolt, MONKEY.size);
-  } else {
-    const key = 'monkey_' + monkey.state.toLowerCase().replace('sleeping', 'sleep')
-      .replace('warning', 'warn').replace('caught', 'caught');
-    px(ctx, key, MONKEY.x, MONKEY.y + breathe + jolt, MONKEY.size);
-  }
+  const key = 'monkey_' + monkey.state.toLowerCase().replace('sleeping', 'sleep')
+    .replace('warning', 'warn').replace('awake', 'awake').replace('caught', 'caught');
+  px(ctx, key, MONKEY.x, MONKEY.y + breathe + jolt, MONKEY.size);
 
   drawPile(ctx, round, time);
   drawMood(ctx, monkey, time);
