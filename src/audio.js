@@ -186,40 +186,26 @@ function brass(freq, delay = 0, dur = 0.5, gain = 0.3) {
   lp.connect(g).connect(bus.sfx);
 }
 
-/** เสียงร้องลิง — ซอว์ + วิบราโตเร็ว ผ่าน lowpass */
+/** เสียงร้องลิง — ตัวอย่างเสียงจริง (มนุษย์เลียนเสียงลิง, CC-BY 3.0 AntumDeluge)
+ * ไม่ใช่ oscillator สังเคราะห์แล้ว เพราะเสียงเดิมฟังดูไม่สมจริง ดูเครดิตที่ assets/audio/CREDITS.txt */
+const VOICE_FILES = { ook: 'monkey_ook.mp3', screech: 'monkey_jiak.mp3', jiak: 'monkey_jiak.mp3', angry: 'monkey_angry.mp3' };
+const voiceEls = {};
+
 function monkeyVoice(kind, delay = 0) {
   if (muted) return;
   const a = ac();
-  let t = a.currentTime + delay;
-  const syllables = {
-    ook: [[300, 190, 0.13]],
-    screech: [[520, 1400, 0.09], [1300, 650, 0.2]],
-    angry: [[420, 260, 0.1], [520, 300, 0.1], [700, 180, 0.24]],
-    jiak: [[900, 1700, 0.045], [850, 1650, 0.04], [950, 1800, 0.045], [820, 1600, 0.04], [900, 1750, 0.05]],
-  }[kind];
-
-  for (const [from, to, dur] of syllables) {
-    const osc = a.createOscillator();
-    const g = a.createGain();
-    const lp = a.createBiquadFilter();
-    lp.type = 'lowpass';
-    lp.frequency.value = 2400;
-    const lfo = a.createOscillator();
-    const lfoGain = a.createGain();
-    lfo.frequency.value = 24;
-    lfoGain.gain.value = from * 0.11;
-    lfo.connect(lfoGain).connect(osc.frequency);
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(from, t);
-    osc.frequency.exponentialRampToValueAtTime(to, t + dur);
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(0.19, t + dur * 0.2);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    osc.connect(lp).connect(g).connect(bus.voice);
-    osc.start(t); lfo.start(t);
-    osc.stop(t + dur + 0.02); lfo.stop(t + dur + 0.02);
-    t += dur + 0.04;
+  if (!voiceEls[kind]) {
+    const el = new Audio('./assets/audio/' + VOICE_FILES[kind]);
+    a.createMediaElementSource(el).connect(bus.voice);
+    voiceEls[kind] = el;
   }
+  const play = () => {
+    const el = voiceEls[kind];
+    el.currentTime = 0;
+    el.play().catch(() => {});
+  };
+  if (delay > 0) setTimeout(play, delay * 1000);
+  else play();
 }
 
 // ---------------------------------------------------------------- ดนตรี

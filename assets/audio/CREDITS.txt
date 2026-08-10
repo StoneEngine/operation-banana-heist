@@ -3,3 +3,8 @@ Source: FREE Action Chiptune Music Pack
 https://opengameart.org/content/free-action-chiptune-music-pack
 License: CC-BY 4.0 — https://creativecommons.org/licenses/by/4.0/
 Re-encoded to 128kbps mp3 for file size.
+
+monkey_ook.mp3 / monkey_jiak.mp3 / monkey_angry.mp3 = "Monkey Sounds" by AntumDeluge (for Stendhal)
+https://opengameart.org/content/monkey-sounds
+License: CC-BY 3.0 — https://creativecommons.org/licenses/by/3.0/
+Re-encoded to 96kbps mp3.
