@@ -167,9 +167,11 @@ function draw(ctx, game) {
   const jolt = monkey.state === STATE.AWAKE ? -8 : 0;
   if (monkey.state === STATE.AWAKE || monkey.state === STATE.CAUGHT) {
     const key = monkey.state === STATE.AWAKE ? 'monkey_awake' : 'monkey_caught';
-    const fps = monkey.state === STATE.AWAKE ? 12 : 14;  // ต้องตรงกับ fps ที่ build_monkey.py ใช้ตอน save_gif
+    const fps = monkey.state === STATE.AWAKE ? 12 : 5;   // ต้องตรงกับ fps ที่ build_monkey.py ใช้ตอน save_gif
     const elapsed = Math.max(0, monkey.totalTime - monkey.timer);
-    const frame = Math.floor(elapsed * fps) % FRAMES[key].count;
+    const raw = Math.floor(elapsed * fps);
+    // AWAKE วนลูปสะบัดหน้าโกรธตลอด; CAUGHT ขว้างครั้งเดียวจบ ห้าม % ไม่งั้นแขนจะย้อนกลับไปเงื้อใหม่กลางอากาศ
+    const frame = monkey.state === STATE.AWAKE ? raw % FRAMES[key].count : Math.min(raw, FRAMES[key].count - 1);
     pxFrame(ctx, key, frame, MONKEY.x, MONKEY.y + breathe + jolt, MONKEY.size);
   } else {
     const key = 'monkey_' + monkey.state.toLowerCase().replace('sleeping', 'sleep').replace('warning', 'warn');

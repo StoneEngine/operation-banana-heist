@@ -159,36 +159,37 @@ def brow_eyes_caught(c):
         c.line(33, 18 + d, 45, 13 + d, INK)
 
 
-def arm_peel(c, dx=0, dy=0):
-    """แขนขวาเงื้อขึ้นเหนือหัว ถือเปลือกกล้วยเตรียมปา (ห้ามทำตากากบาท เดี๋ยวดูเหมือนตาย)"""
-    c.ellipse(44 + dx, 12 + dy, 12, 11, FUR[2])          # ต้นแขน
-    c.ellipse(48 + dx, 4 + dy, 11, 10, FUR[3])           # ปลายแขน
-    c.ellipse(50 + dx, 1 + dy, 9, 8, SKIN[2])            # มือ
+def arm_throw(c, p):
+    """แขนขวาสวิงจริง: p=0 เงื้อเหนือหัว(wind-up) -> p=1 เหวี่ยงลงหน้าอก(follow-through หลังปาออกไปแล้ว)
+    ห้ามทำตากากบาท เดี๋ยวดูเหมือนตาย"""
+    sx, sy = round(lerp(44, 33, p)), round(lerp(12, 27, p))   # ต้นแขน
+    ex, ey = round(lerp(48, 27, p)), round(lerp(4, 21, p))    # ปลายแขน
+    hx, hy = round(lerp(50, 24, p)), round(lerp(1, 18, p))    # มือ
+    c.ellipse(sx, sy, 12, 11, FUR[2])
+    c.ellipse(ex, ey, 11, 10, FUR[3])
+    c.ellipse(hx, hy, 9, 8, SKIN[2])
     c.outline(INK)
-    for x, y in ((52, 0), (55, 1), (53, 3), (56, 4)):    # เปลือกกล้วยในมือ
-        c.set(x + dx, y + dy, YEL_PEEL)
-        c.set(x + 1 + dx, y + 1 + dy, YEL_PEEL)
+    if p < 0.45:                                              # เปลือกกล้วยยังอยู่ในมือก่อนปาออก
+        for ox, oy in ((2, -1), (5, 0), (3, 2), (6, 3)):
+            c.set(hx + ox, hy + oy, YEL_PEEL)
+            c.set(hx + ox + 1, hy + oy + 1, YEL_PEEL)
 
 
-def face_caught_frame(c, t, jitter):
-    """t=0 ขบฟันแค้น(grind), t=1 อ้าปากตะโกน(shout) — แขนสั่นตาม jitter ทุกเฟรม"""
+def face_caught_frame(c, p):
+    """p=0 เงื้อ+ขบฟันแค้น -> p=1 เหวี่ยงปาแล้ว+อ้าปากตะโกน (one-shot ไม่วน สอดคล้องกับ arm_throw)"""
     brow_eyes_caught(c)
     c.ellipse(24, 27, 16, 12, SKIN[4])
     c.ellipse(29, 25, 6, 4, PINK)
-    inner_w = round(lerp(12, 14, t))
-    inner_h = round(lerp(6, 10, t))
-    inner_x = 24 + (16 - inner_w) // 2
-    c.ellipse(inner_x, 29, inner_w, inner_h, INK)
-    if t < 0.5:
-        for fx in (27, 29, 33, 35):             # แถวฟันขบตอนโกรธ
-            c.rect(fx, 29, 2, 3, WHITE)
+    if p < 0.45:
+        c.ellipse(26, 29, 12, 6, INK)
+        for fx_ in (27, 29, 33, 35):            # แถวฟันขบตอนเงื้อ
+            c.rect(fx_, 29, 2, 3, WHITE)
     else:
+        c.ellipse(25, 29, 14, 10, INK)           # อ้าปากตะโกนตอนปาออกไปแล้ว
         c.rect(28, 30, 2, 3, WHITE)
         c.rect(35, 30, 2, 3, WHITE)
-        tongue_y = round(lerp(32, 34, (t - 0.5) / 0.5))
-        c.ellipse(28, tongue_y, 8, 4, PINK)
-    dx, dy = jitter
-    arm_peel(c, dx=dx, dy=dy)
+        c.ellipse(28, 34, 8, 4, PINK)
+    arm_throw(c, p)
     return c
 
 
@@ -217,16 +218,14 @@ save_sheet(awake_frames, os.path.join(SPR, "monkey_awake.png"), cols=N_AWAKE, sc
 save_gif(awake_frames, os.path.join(PRE, "monkey_awake.gif"), scale=6, fps=12)
 print(f"  awake: {awake_frames[0].count_colors()} colors, {N_AWAKE} frames")
 
-# caught: 6-เฟรม ขบฟันแค้น<->อ้าตะโกน ต่อเนื่อง + แขนสั่นทุกเฟรม
+# caught: 6-เฟรม ขว้างเปลือกกล้วยจริง one-shot (เงื้อ -> เหวี่ยงปา -> follow-through)
+# fps=5 * 6 เฟรม = 1.2s พอดีกับ CFG.CAUGHT_LOCK ใน config.js (ห้ามแก้ค่าใดค่าหนึ่งโดยไม่แก้อีกฝั่ง)
 N_CAUGHT = 6
 base_caught = base_body()
 arms(base_caught, 5)
 finish(base_caught)
-caught_frames = [
-    face_caught_frame(base_caught.copy(), bounce(i, N_CAUGHT), jitter=((1, -1) if i % 2 else (0, 0)))
-    for i in range(N_CAUGHT)
-]
+caught_frames = [face_caught_frame(base_caught.copy(), i / (N_CAUGHT - 1)) for i in range(N_CAUGHT)]
 save_sheet(caught_frames, os.path.join(SPR, "monkey_caught.png"), cols=N_CAUGHT, scale=1,
-           manifest=os.path.join(SPR, "monkey_caught.json"), fps=14, name="grind")
-save_gif(caught_frames, os.path.join(PRE, "monkey_caught.gif"), scale=6, fps=14)
+           manifest=os.path.join(SPR, "monkey_caught.json"), fps=5, name="throw")
+save_gif(caught_frames, os.path.join(PRE, "monkey_caught.gif"), scale=6, fps=5)
 print(f"  caught: {caught_frames[0].count_colors()} colors, {N_CAUGHT} frames")

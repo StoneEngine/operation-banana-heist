@@ -72,9 +72,13 @@ function grabAt(x, y) {
     game.round.bananas -= lost;
     game.round.caughtCount += 1;
     game.monkey.catchPlayer();
-    fx.peelBurst(game.player.x);
     fx.shake = CFG.SHAKE_CAUGHT;
     fx.flash = 1;
+    const throwX = game.player.x;
+    setTimeout(() => {
+      // ยิงเปลือกกล้วยตอนแขนเหวี่ยงถึงจุดปล่อยจริง (ดู arm_throw ใน build_monkey.py) ไม่ใช่ตอนเงื้อ
+      if (game.running && game.monkey.state === STATE.CAUGHT) fx.peelBurst(throwX);
+    }, 400);
     if (lost > 0) fx.text(CFG.W / 2, 300, `-${lost} กล้วย`, '#ff8b7a', 46);
     sfx.caught();
   }
