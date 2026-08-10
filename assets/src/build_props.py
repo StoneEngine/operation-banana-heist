@@ -1,0 +1,140 @@
+"""Props + jungle backdrop for Banana Heist.
+
+Run:  python assets/src/build_props.py
+Out:  assets/sprites/{banana,banana_gold,basket,hand,radio,bg}.png
+"""
+import sys, os, random
+sys.path.append(r"C:\Users\MSI KATANA\.claude\skills\pixel-art-studio\scripts")
+from pxlib import Canvas, ramp, save
+
+ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+SPR = os.path.join(ROOT, "sprites")
+PRE = os.path.join(ROOT, "preview")
+
+INK = "#2b1b13"
+YEL = ramp("#f2c14e", steps=5)
+GOLD = ramp("#ffd94a", steps=5)
+WOOD = ramp("#a9703f", steps=5)
+SKIN = ramp("#d9a066", steps=5)
+GREEN = ramp("#3f8f4a", steps=5)
+
+
+def banana(body, hi, lo, sparkle=False):
+    """Crescent = one filled disc with a second disc erased out of it."""
+    c = Canvas(16, 16)
+    c.circle(9, 7, 6, body)                    # outer
+    c.circle(9, 7, 6, lo, filled=False)        # rim shadow
+    c.circle(13, 3, 6, None)                   # bite out the inside curve
+    # relight the outer-left rim
+    for x, y in ((3, 6), (3, 7), (4, 5), (4, 9), (5, 10), (6, 11), (8, 12)):
+        c.set(x, y, lo)
+    for x, y in ((4, 4), (5, 3), (6, 3), (7, 4), (5, 4), (4, 6), (4, 7)):
+        if c.get(x, y)[3]:
+            c.set(x, y, hi)
+    c.set(10, 3, "#6b4a2a"); c.set(11, 2, "#6b4a2a"); c.set(11, 1, "#6b4a2a")
+    c.set(9, 12, "#6b4a2a")
+    c.outline(INK)
+    if sparkle:
+        for x, y in ((2, 2), (14, 8), (5, 14)):
+            c.set(x, y, "#fffbe0")
+    return c
+
+
+def basket():
+    c = Canvas(32, 32)
+    c.ellipse(2, 6, 28, 10, WOOD[3])          # rim
+    c.polygon([(4, 10), (28, 10), (24, 28), (8, 28)], WOOD[2])
+    for y in range(12, 28, 3):                 # weave
+        c.line(5 + (y - 12) // 4, y, 27 - (y - 12) // 4, y, WOOD[1])
+    for x in range(7, 26, 4):
+        c.line(x, 11, x + (16 - x) // 6, 27, WOOD[1])
+    c.ellipse(5, 8, 22, 7, WOOD[0])           # inner dark
+    c.outline(INK)
+    return c
+
+
+def hand():
+    """Thief's hand reaching up, palm open."""
+    c = Canvas(32, 32)
+    c.ellipse(8, 12, 17, 15, SKIN[3])         # palm
+    for i, (x, top) in enumerate(((9, 5), (13, 3), (17, 3), (21, 5))):
+        c.rect(x, top, 3, 12, SKIN[3])
+        c.set(x + 1, top, "#e8bd8e")
+    c.rect(5, 15, 5, 4, SKIN[2])              # thumb
+    c.rect(4, 16, 3, 5, SKIN[2])
+    c.rect(10, 25, 13, 7, "#5a3a6b")          # sleeve
+    c.rect(10, 25, 13, 2, "#7a5290")
+    c.rect(9, 14, 2, 9, "#e8bd8e")            # single soft highlight, light top-left
+    c.outline(INK)
+    return c
+
+
+def radio():
+    c = Canvas(16, 16)
+    c.rect(2, 6, 12, 8, "#8a8f98")
+    c.rect(3, 7, 6, 5, "#4a4f58")
+    c.set(4, 8, "#cfd6e0"); c.set(6, 10, "#cfd6e0")
+    c.circle(11, 9, 1, "#f2c14e")
+    c.rect(10, 11, 3, 1, "#3a3f48")
+    c.line(12, 5, 14, 1, "#b9c0cb")           # antenna
+    c.set(14, 1, "#f2c14e")
+    c.outline(INK)
+    # music notes
+    c.set(1, 3, "#fff1e0"); c.set(1, 2, "#fff1e0"); c.set(0, 4, "#fff1e0")
+    return c
+
+
+def leaf(c, x, y, w, h, col):
+    c.ellipse(x, y, w, h, col)
+    c.line(x + w // 2, y + 1, x + w // 2, y + h - 2, GREEN[0])
+
+
+def bg():
+    """240x135 jungle backdrop, canvas scales it x4."""
+    rnd = random.Random(7)
+    c = Canvas(240, 135, fill="#2f7a58")
+    c.gradient_dither(["#12402f", "#1d5c46", "#2f7a58", "#49966a", "#69b981"],
+                      axis="y", box=(0, 0, 240, 104))
+    # far foliage band
+    for i in range(34):
+        x = rnd.randrange(-6, 240)
+        y = rnd.randrange(0, 46)
+        leaf(c, x, y, rnd.randrange(16, 30), rnd.randrange(8, 14), GREEN[1])
+    # ground
+    c.rect(0, 104, 240, 31, ramp("#5a3c1f", 5)[1])
+    c.gradient_dither(["#4a3018", "#5a3c1f", "#6b4a2a"], axis="y", box=(0, 104, 240, 31))
+    for i in range(70):                        # pebbles / grass tufts
+        x, y = rnd.randrange(240), rnd.randrange(106, 134)
+        c.set(x, y, GREEN[0] if rnd.random() < .5 else ramp("#5a3c1f", 5)[0])
+    # grass edge
+    for x in range(0, 240, 3):
+        h = rnd.randrange(2, 5)
+        c.line(x, 104, x, 104 - h, GREEN[2])
+        c.line(x + 1, 104, x + 1, 105 - h, GREEN[1])
+    # vines from top
+    for x in (18, 62, 150, 210):
+        L = rnd.randrange(20, 60)
+        for y in range(L):
+            c.set(x + (y // 7) % 2, y, GREEN[1])
+            if y % 9 == 0:
+                leaf(c, x - 3, y, 7, 4, GREEN[2])
+    # foreground leaves, bottom corners
+    for x, y, w, h in ((-8, 112, 46, 22), (206, 108, 48, 24), (150, 124, 40, 18)):
+        leaf(c, x, y, w, h, "#1d5c46")
+    return c
+
+
+items = {
+    "banana": banana("#f7d94c", "#fff3a0", "#d09a1e"),
+    "banana_gold": banana("#ffd21f", "#fff8c2", "#c8860a", sparkle=True),
+    "basket": basket(),
+    "hand": hand(),
+    "radio": radio(),
+}
+for name, c in items.items():
+    save(c, os.path.join(SPR, f"{name}.png"))
+    save(c, os.path.join(PRE, f"{name}.png"), scale=8)
+
+b = bg()
+save(b, os.path.join(SPR, "bg.png"))
+save(b, os.path.join(PRE, "bg.png"), scale=2)
