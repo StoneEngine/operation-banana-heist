@@ -50,12 +50,15 @@ def base_body():
     return c
 
 
-def arms(c, lift=0):
-    """Arms hugging the banana pile; lift raises the hands (awake pose)."""
+def arms(c, lift=0, right=True):
+    """Arms hugging the banana pile; lift raises the hands (awake pose).
+    right=False = ข้ามแขนขวา ใช้ตอน caught เพราะ face_caught() วาดแขนเงื้อทับอยู่แล้ว
+    (เคยลืมปิดอันนี้มาก่อน ผลคือลิงมี 3 แขน: hug ซ้าย + hug ขวา + เงื้อขวา)"""
     c.ellipse(10, 36 - lift, 14, 12, FUR[2])
-    c.ellipse(40, 36 - lift, 14, 12, FUR[2])
     c.ellipse(13, 42 - lift, 9, 8, SKIN[2])
-    c.ellipse(42, 42 - lift, 9, 8, SKIN[2])
+    if right:
+        c.ellipse(40, 36 - lift, 14, 12, FUR[2])
+        c.ellipse(42, 42 - lift, 9, 8, SKIN[2])
     return c
 
 
@@ -166,7 +169,7 @@ MOODS = {
 
 for name, (face, lift) in MOODS.items():
     c = base_body()
-    arms(c, lift)
+    arms(c, lift, right=(name != "caught"))
     finish(c)
     face(c)
     save(c, os.path.join(SPR, f"monkey_{name}.png"))
