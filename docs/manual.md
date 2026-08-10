@@ -43,8 +43,8 @@
 
 ## 5. ลิงก์
 
-- GitHub: _(ใส่ลิงก์รีโป public)_
-- เล่นเกม (GitHub Pages): _(ใส่ลิงก์)_
+- GitHub: https://github.com/StoneEngine/operation-banana-heist
+- เล่นเกม (GitHub Pages): https://stoneengine.github.io/operation-banana-heist/
 - วิดีโอ demo 2–3 นาที: _(ใส่ลิงก์ YouTube หรือไฟล์ docs/demo.mp4)_
 
 ## 6. ผลประเมินจากผู้เล่น (อย่างน้อย 15 คน)

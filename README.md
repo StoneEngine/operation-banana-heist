@@ -5,7 +5,7 @@
 
 - ชื่อกลุ่ม: _(ใส่ชื่อกลุ่ม)_
 - สมาชิก: _(ใส่ชื่อ-รหัสนิสิตทุกคน)_
-- เล่นเกม (deploy): _(ใส่ลิงก์ GitHub Pages)_
+- **เล่นเกมเลย: https://stoneengine.github.io/operation-banana-heist/**
 - คู่มือ/รายงาน: [docs/manual.md](docs/manual.md)
 
 ## วิธีเล่น
