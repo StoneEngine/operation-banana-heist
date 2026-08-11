@@ -12,17 +12,17 @@ const ENDINGS = {
   bronze: {
     title: '🥉 วิ่งหนีหางจุกตูด',
     body: 'บอสคองตื่นมาคำรามลั่นป่า ไล่ปาเปลือกกล้วยจนคุณต้องเตลิดออกมา\nกล้วยไม่พอแจก ปาร์ตี้ต้องยกเลิก สัตว์เล็กสัตว์น้อยแอบเศร้านิดๆ — กลับไปฝึกวิชานินจาใหม่!',
-    monkey: 'monkey_caught', prop: 'banana_peel', cls: 'shake',
+    monkey: 'monkey_caught', prop: 'banana_peel', cls: 'shake', sound: 'bronze',
   },
   silver: {
     title: '🥈 ฮีโร่แห่งหมู่บ้าน',
     body: 'บอสคองตื่นมาตบพุงตัวเองงุนงงว่ากล้วยหายไปไหนหมด ได้แต่นั่งเกาหัวแกรกๆ\nกล้วยเยอะพอจัด "มหกรรมปาร์ตี้กล้วยหอมทองคำ" ฉลอง 7 วัน 7 คืน! คุณคือฮีโร่ของหมู่บ้าน',
-    monkey: 'monkey_awake', prop: 'basket', cls: 'sway',
+    monkey: 'monkey_awake', prop: 'basket', cls: 'sway', sound: 'silver',
   },
   gold: {
     title: '🥇 ตำนานจ้าวป่าคนใหม่!',
     body: 'คุณมือไวระดับแสงจนขโมยกล้วยหมดเกาะ บอสคองเห็นคลังกล้วยว่างเปล่าถึงกับเข่าทรุด\nมันยอมก้มหัวคารวะขอเป็นลูกศิษย์ คุณถูกแต่งตั้งเป็นราชาแห่งป่าหรรษา พร้อมบอดี้การ์ดส่วนตัว!',
-    monkey: 'monkey_sleep', prop: 'banana_gold', cls: 'glow',
+    monkey: 'monkey_sleep', prop: 'banana_gold', cls: 'glow', sound: 'gold',
   },
 };
 
@@ -46,6 +46,7 @@ const story = {
     this.onDone = onDone;
     this.i = -1;
     this.el.hidden = false;
+    sfx.music.start();                 // เพลงเริ่มตั้งแต่ intro แล้วเล่นต่อเนื่องเข้าเกมเลย
     this.next();
   },
 
@@ -53,6 +54,8 @@ const story = {
     this.i += 1;
     if (this.i >= STORY_SLIDES.length) { this.close(); return; }
     this.scenes.forEach((s, n) => s.classList.toggle('on', n === this.i));
+    sfx.page();
+    if (this.i === 1) sfx.bossReveal();   // แผ่นที่บอสคองโผล่
     this.chars = Array.from(STORY_SLIDES[this.i]);
     this.shown = 0;
     this.textEl.textContent = '';
@@ -60,6 +63,7 @@ const story = {
     this.timer = setInterval(() => {
       this.shown += 1;
       this.textEl.textContent = this.chars.slice(0, this.shown).join('');
+      if (this.shown % 3 === 0) sfx.type();          // เสียงพิมพ์ดีด ทุก 3 ตัวพอ ไม่งั้นรก
       if (this.shown >= this.chars.length) clearInterval(this.timer);
     }, 1000 / CFG.STORY_CPS);
   },

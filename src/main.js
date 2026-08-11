@@ -113,7 +113,7 @@ ui.again.addEventListener('click', () => { sfx.unlock(); start(); });
 ui.mute.addEventListener('click', () => {
   const m = sfx.toggleMute();
   ui.mute.textContent = m ? '🔇 เสียงปิด' : '🔊 เสียงเปิด';
-  if (!m && game.running) sfx.music.start();     // เปิดเสียงกลางเกม = ดนตรีกลับมา
+  if (!m && (game.running || !story.el.hidden)) sfx.music.start();   // เปิดเสียงกลางเกม/กลาง intro = ดนตรีกลับมา
 });
 
 // ---------- วงจรเกม ----------
@@ -144,8 +144,8 @@ function finish() {
   ui.endMonkey.src = `./assets/sprites/${end.monkey}.png`;
   ui.endProp.src = `./assets/sprites/${end.prop}.png`;
   ui.endMonkey.className = end.cls;
+  sfx.ending(end.sound);
   ui.over.hidden = false;
-  sfx.end();
 }
 
 let last = performance.now();

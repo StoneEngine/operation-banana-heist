@@ -285,9 +285,35 @@ const sfx = {
     noiseBurst({ dur: 0.5, gain: 0.16, filter: 'highpass', freq: 3000, sweepTo: 800 });
     monkeyVoice('angry', 0.12);
   },
-  end() {                                             // แตรวงจบเกม
+  // ---- หน้าเล่าเรื่อง ----
+  type() {                                            // เสียงพิมพ์ดีด เบามาก
+    noiseBurst({ dur: 0.02, gain: 0.05, filter: 'bandpass', freq: 3200, q: 12 });
+  },
+  page() {                                            // เปลี่ยนแผ่น = เสียงกระดาษพลิก
+    noiseBurst({ dur: 0.18, gain: 0.13, filter: 'highpass', freq: 2400, sweepTo: 600 });
+  },
+  bossReveal() {                                      // บอสคองโผล่ = กลองหนัก + คำราม
+    duck(0.1, 1.2);
+    drum(120, 38, 0.7, 0.55);
+    noiseBurst({ dur: 0.4, gain: 0.14, filter: 'highpass', freq: 2600, sweepTo: 700 });
+    monkeyVoice('angry', 0.18);
+  },
+
+  // ---- ฉากจบ 3 แบบ คนละเสียง ----
+  ending(kind) {
     music.stop();
-    [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => brass(f, i * 0.12, 0.5));
+    if (kind === 'bronze') {                          // แตรไล่ลง = เศร้าตลก + ลิงด่าไล่หลัง
+      [392.00, 349.23, 311.13, 261.63].forEach((f, i) => brass(f, i * 0.18, 0.6));
+      drum(150, 50, 0.5, 0.45, 0.72);
+      monkeyVoice('angry', 0.5);
+    } else if (kind === 'silver') {                   // แตรวงฉลอง
+      [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => brass(f, i * 0.12, 0.5));
+    } else {                                          // gold: แตรวงยาว + ระฆัง + ลิงยอมแพ้
+      [523.25, 659.25, 783.99, 1046.50, 1318.51].forEach((f, i) => brass(f, i * 0.13, 0.7));
+      bell(1046.50, 0.7, 1.4);
+      bell(1567.98, 0.85, 1.2, 0.22);
+      monkeyVoice('ook', 1.2);
+    }
   },
 
   tick(last = false) {                                // woodblock นับถอยหลัง
