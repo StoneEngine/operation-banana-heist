@@ -186,13 +186,14 @@ function brass(freq, delay = 0, dur = 0.5, gain = 0.3) {
   lp.connect(g).connect(bus.sfx);
 }
 
-/** เสียงร้องลิง — บันทึกเสียงสัตว์จริง (gibbon/chimp/gorilla, Mike Koenig, SoundBible.com)
- * ไม่ใช่ oscillator สังเคราะห์ และไม่ใช่คนเลียนเสียงแล้ว ดูเครดิตที่ assets/audio/CREDITS.txt */
+/** เสียงร้องลิง — บันทึกเสียงสัตว์จริง (gibbon/chimp, Mike Koenig, SoundBible.com)
+ * ไม่ใช่ oscillator สังเคราะห์ และไม่ใช่คนเลียนเสียงแล้ว ดูเครดิตที่ assets/audio/CREDITS.txt
+ * (เดิมมี monkey_angry.mp3/กอริลลาด้วย ตัดออกเพราะฟังแล้วเหมือนเสียงคน/หมา ไม่เหมือนลิง) */
 // เสียงลิงดังทีละเสียงเท่านั้น (monophonic) — ไฟล์ยาวเกือบ 2 วิ แต่ WARNING สั้น 0.6 วิ
 // ถ้าปล่อยให้ทับกันได้จะกลายเป็นลิงทั้งฝูงร้องพร้อมกัน เลยตัดเสียงเก่าทิ้งก่อนเล่นเสียงใหม่เสมอ
-const VOICE_FILES = { ook: 'monkey_ook.mp3', screech: 'monkey_jiak.mp3', jiak: 'monkey_jiak.mp3', angry: 'monkey_angry.mp3' };
+const VOICE_FILES = { ook: 'monkey_ook.mp3', screech: 'monkey_jiak.mp3', jiak: 'monkey_jiak.mp3' };
 const VOICE_GAP = 0.22;              // เสียงลิงต้องห่างกันอย่างน้อยเท่านี้ (วินาที)
-const VOICE_PRIORITY = { ook: 0, screech: 1, jiak: 1, angry: 2 };
+const VOICE_PRIORITY = { ook: 0, screech: 1, jiak: 1 };
 const voiceEls = {};
 let voiceTimer = null;
 let voicePlaying = null;
@@ -301,11 +302,10 @@ const sfx = {
     monkeyVoice('jiak');
     noiseBurst({ dur: 0.25, gain: 0.1, filter: 'highpass', freq: 5000 });
   },
-  caught() {                                          // กลองตูม + ฉาบ + ลิงด่า
+  caught() {                                          // กลองตูม + ฉาบ
     duck(0.08, 1.0);
     drum(180, 45, 0.45, 0.6);
     noiseBurst({ dur: 0.5, gain: 0.16, filter: 'highpass', freq: 3000, sweepTo: 800 });
-    monkeyVoice('angry', 0.12);
   },
   // ---- หน้าเล่าเรื่อง ----
   type() {                                            // เสียงพิมพ์ดีด เบามาก
@@ -314,20 +314,18 @@ const sfx = {
   page() {                                            // เปลี่ยนแผ่น = เสียงกระดาษพลิก
     noiseBurst({ dur: 0.18, gain: 0.13, filter: 'highpass', freq: 2400, sweepTo: 600 });
   },
-  bossReveal() {                                      // บอสคองโผล่ = กลองหนัก + คำราม
+  bossReveal() {                                      // บอสคองโผล่ = กลองหนัก
     duck(0.1, 1.2);
     drum(120, 38, 0.7, 0.55);
     noiseBurst({ dur: 0.4, gain: 0.14, filter: 'highpass', freq: 2600, sweepTo: 700 });
-    monkeyVoice('angry', 0.18);
   },
 
   // ---- ฉากจบ 3 แบบ คนละเสียง ----
   ending(kind) {
     music.stop();
-    if (kind === 'bronze') {                          // แตรไล่ลง = เศร้าตลก + ลิงด่าไล่หลัง
+    if (kind === 'bronze') {                          // แตรไล่ลง = เศร้าตลก
       [392.00, 349.23, 311.13, 261.63].forEach((f, i) => brass(f, i * 0.18, 0.6));
       drum(150, 50, 0.5, 0.45, 0.72);
-      monkeyVoice('angry', 0.5);
     } else if (kind === 'silver') {                   // แตรวงฉลอง
       [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => brass(f, i * 0.12, 0.5));
     } else {                                          // gold: แตรวงยาว + ระฆัง + ลิงยอมแพ้

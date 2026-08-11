@@ -13,7 +13,3 @@ Credit: "Gibbon Monkey" by Mike Koenig (SoundBible.com)
 monkey_jiak.mp3 = "Chimpanzee" by Mike Koenig
 https://soundbible.com/1188-Chimpanzee.html · License: Attribution 3.0
 Credit: "Chimpanzee" by Mike Koenig (SoundBible.com)
-
-monkey_angry.mp3 = "Gorilla" by Mike Koenig
-https://soundbible.com/1149-Gorilla.html · License: Public Domain
-Credit: "Gorilla" by Mike Koenig (SoundBible.com)
