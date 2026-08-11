@@ -188,23 +188,45 @@ function brass(freq, delay = 0, dur = 0.5, gain = 0.3) {
 
 /** เสียงร้องลิง — บันทึกเสียงสัตว์จริง (gibbon/chimp/gorilla, Mike Koenig, SoundBible.com)
  * ไม่ใช่ oscillator สังเคราะห์ และไม่ใช่คนเลียนเสียงแล้ว ดูเครดิตที่ assets/audio/CREDITS.txt */
+// เสียงลิงดังทีละเสียงเท่านั้น (monophonic) — ไฟล์ยาวเกือบ 2 วิ แต่ WARNING สั้น 0.6 วิ
+// ถ้าปล่อยให้ทับกันได้จะกลายเป็นลิงทั้งฝูงร้องพร้อมกัน เลยตัดเสียงเก่าทิ้งก่อนเล่นเสียงใหม่เสมอ
 const VOICE_FILES = { ook: 'monkey_ook.mp3', screech: 'monkey_jiak.mp3', jiak: 'monkey_jiak.mp3', angry: 'monkey_angry.mp3' };
+const VOICE_GAP = 0.22;              // เสียงลิงต้องห่างกันอย่างน้อยเท่านี้ (วินาที)
+const VOICE_PRIORITY = { ook: 0, screech: 1, jiak: 1, angry: 2 };
 const voiceEls = {};
+let voiceTimer = null;
+let voicePlaying = null;
+let voiceUntil = 0;
+
+function stopVoices() {
+  for (const el of Object.values(voiceEls)) { el.pause(); el.currentTime = 0; }
+  voicePlaying = null;
+}
 
 function monkeyVoice(kind, delay = 0) {
   if (muted) return;
   const a = ac();
+  const now = a.currentTime + delay;
+  // ยังมีเสียงค้างอยู่และเสียงใหม่ไม่ได้สำคัญกว่า = ไม่ต้องเล่นซ้อน
+  if (voicePlaying && now < voiceUntil &&
+      VOICE_PRIORITY[kind] <= VOICE_PRIORITY[voicePlaying]) return;
+
   if (!voiceEls[kind]) {
     const el = new Audio('./assets/audio/' + VOICE_FILES[kind]);
     a.createMediaElementSource(el).connect(bus.voice);
     voiceEls[kind] = el;
   }
   const play = () => {
+    voiceTimer = null;
+    stopVoices();                                   // ตัดตัวที่ค้างอยู่ทิ้งก่อน
     const el = voiceEls[kind];
     el.currentTime = 0;
     el.play().catch(() => {});
+    voicePlaying = kind;
+    voiceUntil = ac().currentTime + (el.duration || 1.6) + VOICE_GAP;
   };
-  if (delay > 0) setTimeout(play, delay * 1000);
+  clearTimeout(voiceTimer);                          // เสียงที่ยังไม่ทันเล่นก็ยกเลิก
+  if (delay > 0) voiceTimer = setTimeout(play, delay * 1000);
   else play();
 }
 
