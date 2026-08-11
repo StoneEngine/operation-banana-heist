@@ -26,8 +26,36 @@
     <p class="hint">คลิก / แตะ / เว้นวรรค = ยื่นมือหยิบ</p>
   </div>
 
+  <div id="story" class="overlay" hidden>
+    <div class="story-art">
+      <div class="scene" data-scene="0">
+        <img class="scene-bg zoom" src="./assets/sprites/bg.png" alt="">
+        <img class="prop p1 float-a" src="./assets/sprites/banana.png" alt="">
+        <img class="prop p2 float-b" src="./assets/sprites/banana_gold.png" alt="">
+        <img class="prop p3 float-c" src="./assets/sprites/banana.png" alt="">
+      </div>
+      <div class="scene" data-scene="1">
+        <img class="scene-bg dim" src="./assets/sprites/bg.png" alt="">
+        <img class="boss rumble" src="./assets/sprites/monkey_awake.png" alt="">
+      </div>
+      <div class="scene" data-scene="2">
+        <img class="scene-bg dim" src="./assets/sprites/bg.png" alt="">
+        <img class="prop p-basket" src="./assets/sprites/basket.png" alt="">
+        <div class="handcrop creep"><img src="./assets/sprites/hand.png" alt=""></div>
+      </div>
+    </div>
+    <p id="story-text" class="story-text"></p>
+    <p class="hint">คลิก / แตะ / เว้นวรรค = ไปต่อ</p>
+    <button id="btn-skip" class="skip">ข้าม ▶</button>
+  </div>
+
   <div id="gameover" class="overlay" hidden>
-    <h2>หมดเวลา!</h2>
+    <div class="ending-art">
+      <img id="ending-prop" alt="">
+      <img id="ending-monkey" alt="">
+    </div>
+    <h2 id="ending-title">หมดเวลา!</h2>
+    <p id="ending-body" class="ending-body"></p>
     <p class="score">ได้กล้วย <b id="final-score">0</b> ลูก</p>
     <p class="small">โดนจับ <b id="final-caught">0</b> ครั้ง · สถิติสูงสุด <b id="best-score">0</b></p>
     <p id="new-best" class="newbest" hidden>สถิติใหม่!</p>
@@ -43,6 +71,7 @@
 <script src="./src/powerups.js"></script>
 <script src="./src/audio.js"></script>
 <script src="./src/render.js"></script>
+<script src="./src/story.js"></script>
 <script src="./src/main.js"></script>
 </body>
 </html>

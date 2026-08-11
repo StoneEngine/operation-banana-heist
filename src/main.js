@@ -12,6 +12,10 @@ const ui = {
   newBest: document.getElementById('new-best'),
   caught: document.getElementById('final-caught'),
   loading: document.getElementById('loading'),
+  endTitle: document.getElementById('ending-title'),
+  endBody: document.getElementById('ending-body'),
+  endMonkey: document.getElementById('ending-monkey'),
+  endProp: document.getElementById('ending-prop'),
 };
 
 const game = {
@@ -93,12 +97,18 @@ window.addEventListener('keydown', (e) => {
   if (e.code !== 'Space' && e.code !== 'ArrowUp') return;
   e.preventDefault();
   sfx.unlock();
+  if (!story.el.hidden) { story.advance(); return; }
   if (!game.running) { start(); return; }
   grabAt(game.player.x, game.player.handY - 120);
 });
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
-ui.play.addEventListener('click', () => { sfx.unlock(); start(); });
+// เล่นครั้งแรกจากเมนู = ดูเนื้อเรื่องก่อน (ข้ามได้) · เล่นซ้ำจากหน้าจบ = เข้าเกมเลย
+ui.play.addEventListener('click', () => {
+  sfx.unlock();
+  ui.menu.hidden = true;
+  story.play(start);
+});
 ui.again.addEventListener('click', () => { sfx.unlock(); start(); });
 ui.mute.addEventListener('click', () => {
   const m = sfx.toggleMute();
@@ -128,6 +138,12 @@ function finish() {
   ui.best.textContent = bestScore.get();
   ui.caught.textContent = game.round.caughtCount;
   ui.newBest.hidden = !isBest;
+  const end = endingFor(game.round.bananas);
+  ui.endTitle.textContent = end.title;
+  ui.endBody.textContent = end.body;
+  ui.endMonkey.src = `./assets/sprites/${end.monkey}.png`;
+  ui.endProp.src = `./assets/sprites/${end.prop}.png`;
+  ui.endMonkey.className = end.cls;
   ui.over.hidden = false;
   sfx.end();
 }

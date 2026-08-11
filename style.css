@@ -114,6 +114,147 @@ h2 {
 
 .big:active { transform: translateY(4px); box-shadow: 0 2px 0 #b98a1a; }
 
+/* ---------- หน้าเล่าเรื่อง (intro) ---------- */
+#story { justify-content: flex-start; padding: 0; background: #100c09; }
+
+.story-art {
+  position: relative;
+  width: 100%;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.scene { position: absolute; inset: 0; opacity: 0; transition: opacity .45s ease; }
+.scene.on { opacity: 1; }
+
+.scene-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+}
+
+.scene-bg.dim { filter: brightness(.55); }
+.scene-bg.zoom { animation: slowzoom 9s ease-out forwards; }
+@keyframes slowzoom { from { transform: scale(1); } to { transform: scale(1.12); } }
+
+.prop {
+  position: absolute;
+  width: 9%;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 6px 6px rgba(0, 0, 0, .5));
+}
+
+.p1 { left: 16%; top: 24%; }
+.p2 { left: 47%; top: 14%; }
+.p3 { left: 76%; top: 28%; }
+.p-basket { left: 66%; top: 34%; width: 20%; }
+
+.float-a { animation: bob 2.4s ease-in-out infinite alternate; }
+.float-b { animation: bob 1.9s ease-in-out .3s infinite alternate; }
+.float-c { animation: bob 2.8s ease-in-out .6s infinite alternate; }
+@keyframes bob { from { transform: translateY(0); } to { transform: translateY(-14%); } }
+
+.boss {
+  position: absolute;
+  left: 50%;
+  bottom: 4%;
+  height: 82%;
+  transform: translateX(-50%);
+  image-rendering: pixelated;
+  filter: drop-shadow(0 10px 10px rgba(0, 0, 0, .6));
+}
+
+.rumble { animation: rumble .22s linear infinite; }
+@keyframes rumble {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-4px); }
+}
+
+/* hand.png เป็น sheet 4 เฟรม — ครอบให้เห็นเฟรมแรกเฟรมเดียว */
+.handcrop {
+  position: absolute;
+  left: 8%;
+  bottom: 6%;
+  width: 16%;
+  height: 52%;
+  overflow: hidden;
+}
+
+.handcrop img {
+  width: 400%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+.creep { animation: creep 3s ease-in-out infinite alternate; }
+@keyframes creep { from { transform: translateX(0); } to { transform: translateX(180%); } }
+
+.story-text {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 3% 6%;
+  min-height: 26%;
+  white-space: pre-line;
+  font-size: clamp(12px, 2.3vw, 21px);
+  line-height: 1.8;
+}
+
+.skip {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  padding: .35em .8em;
+  font: inherit;
+  font-size: clamp(10px, 1.6vw, 15px);
+  color: var(--cream);
+  background: rgba(28, 20, 14, .72);
+  border: 3px solid var(--ink);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+/* ---------- ฉากจบ 3 แบบ ---------- */
+.ending-art {
+  height: 24%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 4%;
+}
+
+.ending-art img {
+  height: 100%;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 8px 8px rgba(0, 0, 0, .55));
+}
+
+#ending-prop { height: 55%; }
+
+.ending-body {
+  margin: 0;
+  max-width: 84%;
+  white-space: pre-line;
+  font-size: clamp(11px, 2vw, 18px);
+  line-height: 1.7;
+  opacity: .95;
+}
+
+#ending-monkey.shake { animation: endshake .18s linear infinite; }
+@keyframes endshake { 0%, 100% { transform: translateX(-3px); } 50% { transform: translateX(3px); } }
+
+#ending-monkey.sway { animation: endsway 1.6s ease-in-out infinite alternate; }
+@keyframes endsway { from { transform: rotate(-4deg); } to { transform: rotate(4deg); } }
+
+#ending-monkey.glow { animation: endglow 1.4s ease-in-out infinite alternate; }
+/* เอียงหน้าลง = ก้มหัวคารวะ (ใช้ sprite ลิงหลับ ตาปิดอยู่แล้ว) */
+@keyframes endglow {
+  from { transform: rotate(10deg); filter: drop-shadow(0 8px 8px rgba(0, 0, 0, .55)); }
+  to { transform: rotate(16deg); filter: drop-shadow(0 0 18px var(--yellow)) drop-shadow(0 8px 8px rgba(0, 0, 0, .55)); }
+}
+
 .mute {
   position: absolute;
   right: 10px;
