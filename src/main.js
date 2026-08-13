@@ -26,6 +26,7 @@ const game = {
   weapon: new Weapon(),
   cam: { x: 0, y: 0 },
   nextUpgradeAt: CFG.UPGRADE_EVERY,
+  healAcc: 0,             // กล้วยสะสมสำหรับฟื้นเลือด
   paused: false,          // true ตอนเลือกอัปเกรด
   time: 0,
   running: false,
@@ -175,6 +176,7 @@ function start() {
   game.cam.x = clampNum(game.player.x - CFG.W / 2, 0, CFG.WORLD.w - CFG.W);
   game.cam.y = clampNum(game.player.y - CFG.H / 2, 0, CFG.WORLD.h - CFG.H);
   game.nextUpgradeAt = CFG.UPGRADE_EVERY;
+  game.healAcc = 0;
   game.paused = false;
   fx.reset();
   game.running = true;
@@ -184,7 +186,7 @@ function start() {
   ui.upgrade.hidden = true;
 }
 
-function finish(dead = false) {
+function finish(dead = false, won = false) {
   if (!game.running) return;
   game.running = false;
   game.paused = false;
@@ -195,8 +197,8 @@ function finish(dead = false) {
   ui.best.textContent = bestScore.get();
   ui.caught.textContent = game.round.caughtCount;
   ui.newBest.hidden = !isBest;
-  // เลือดหมด = จบแบบแพ้เสมอ ไม่ว่าเก็บได้เท่าไหร่
-  const end = dead ? ENDINGS.bronze : endingFor(game.round.bananas);
+  // เลือดหมด = แพ้เสมอ · ล้มบอสได้ = ฉากจบดีที่สุดเสมอ
+  const end = dead ? ENDINGS.bronze : (won ? ENDINGS.gold : endingFor(game.round.bananas));
   ui.endTitle.textContent = dead ? '💀 โดนจับคาป่า' : end.title;
   ui.endMonkey.src = `./assets/sprites/${end.monkey}.png`;
   ui.endProp.src = `./assets/sprites/${end.prop}.png`;
@@ -219,6 +221,16 @@ function frame(now) {
     const gain = game.arena.collect(game.player);
     if (gain > 0) {
       game.round.bananas += gain;
+      // กินกล้วยครบทุกๆ HEAL_EVERY = ฟื้นเลือด 1 หน่วย
+      game.healAcc += gain;
+      while (game.healAcc >= CFG.HEAL_EVERY) {
+        game.healAcc -= CFG.HEAL_EVERY;
+        if (game.player.hp < game.player.maxHp) {
+          game.player.hp += 1;
+          fx.text(game.player.x, game.player.hitY - 70, '+1 เลือด', '#4dff9f', 32);
+          sfx.heal();
+        }
+      }
       if (!game.arena.bossOut && game.round.bananas >= CFG.BOSS_AT) {
         game.arena.spawnBoss(game.player, game.cam);
       }
@@ -231,11 +243,8 @@ function frame(now) {
     const hit = game.arena.hitTest(game.player);
     if (hit) hurt(hit);
 
-    const before = Math.ceil(game.round.time);
     game.round.update(dt);
-    const left = Math.ceil(game.round.time);
-    if (left !== before && left <= 5 && left >= 0) sfx.tick(left === 0);
-    if (game.round.over) finish();
+    if (game.arena.bossDead) finish(false, true);   // ล้มบอสได้ = ชนะ จบเกม
   }
   fx.update(dt);
   draw(ctx, game);

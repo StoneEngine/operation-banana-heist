@@ -218,12 +218,69 @@ def ghost_frame(dir_, step):
 SAND = ramp("#c9a86a", steps=5)
 DARK = ramp("#2f5d3a", steps=5)
 
+SPIDER = ramp("#4a3a63", steps=5)
+ROACH = ramp("#7a4a22", steps=5)
+
+
+def spider_frame(dir_, step):
+    """แมงมุม 24x24 — ขา 8 ขาขยับสลับ ตาแดง"""
+    c = Canvas(24, 24)
+    leg = 1 if step else -1
+    c.ellipse(4, 18, 16, 4, "#2f4a28")                    # เงา
+    for i, dy in enumerate((6, 10, 14)):                  # ขาซ้าย-ขวา
+        off = leg if i % 2 else -leg
+        c.line(8, dy + 2, 1, dy + off, SPIDER[1])
+        c.line(15, dy + 2, 22, dy + off, SPIDER[1])
+    c.ellipse(5, 6, 14, 12, SPIDER[3])                    # ท้อง
+    c.ellipse(8, 4, 8, 7, SPIDER[4])                      # หัว
+    c.ellipse(7, 9, 10, 6, SPIDER[2])                     # ลายหลัง
+    c.outline("#1b1526", diagonal=False)
+    if dir_ != "up":                                      # ตาแดง 4 ดวง
+        for ex in (9, 13):
+            c.set(ex, 6, "#ff3b3b")
+            c.set(ex, 8, "#ff7b7b")
+    return c
+
+
+def roach_frame(dir_, step):
+    """แมงสาบ 20x20 — ตัวแบน หนวดยาว วิ่งเร็ว"""
+    c = Canvas(20, 20)
+    wig = 1 if step else 0
+    c.ellipse(3, 15, 14, 4, "#2f4a28")
+    for x in (5, 9, 13):                                  # ขา
+        c.line(x, 12, x - 2, 15 + wig, ROACH[1])
+        c.line(x, 12, x + 3, 15 - wig, ROACH[1])
+    c.ellipse(3, 4, 14, 11, ROACH[2])                     # ปีกแข็ง
+    c.ellipse(5, 6, 10, 7, ROACH[3])
+    c.line(9, 4, 9, 12, ROACH[1])                         # รอยกลางปีก
+    c.ellipse(6, 1, 8, 5, ROACH[4])                       # หัว
+    c.line(7, 1, 3 - wig, -2, ROACH[1])                   # หนวด
+    c.line(12, 1, 16 + wig, -2, ROACH[1])
+    c.outline("#241608", diagonal=False)
+    c.set(7, 2, "#ffd94a"); c.set(11, 2, "#ffd94a")       # ตาเหลือง
+    return c
+
+
+def trap():
+    """กับดักหนีบ 24x24 — วางนิ่งบนพื้น เหยียบโดนเสียเลือด"""
+    c = Canvas(24, 24)
+    STEEL = ramp("#8d8f96", steps=5)
+    c.ellipse(3, 8, 18, 11, STEEL[1])                     # ฐาน
+    c.ellipse(6, 10, 12, 7, "#3a2a1c")                    # ปากกับดัก
+    for x in range(5, 20, 3):                             # ฟันบน-ล่าง
+        c.line(x, 8, x + 1, 4, STEEL[4])
+        c.line(x, 15, x + 1, 19, STEEL[4])
+    c.ellipse(9, 11, 6, 4, "#1c130c")
+    c.outline(INK)
+    return c
+
+
 items = {
     "ground_tile": ground_tile(),                      # โซนหญ้า (โซนเริ่มต้น)
     "ground_dirt": ground_tile(DIRT, blades=4),        # โซนดินแห้ง
     "ground_sand": ground_tile(SAND, blades=3),        # โซนชายหาด
     "ground_dark": ground_tile(DARK, blades=12),       # โซนป่าลึก (ที่ลิงผีชอบโผล่)
-    "bush": bush(), "stone": stone(), "rock": rock(), "star": star(),
+    "bush": bush(), "stone": stone(), "rock": rock(), "star": star(), "trap": trap(),
 }
 for name, c in items.items():
     save(c, os.path.join(SPR, f"{name}.png"))
@@ -247,6 +304,17 @@ save(enemy_frames[0], os.path.join(SPR, "enemy_icon.png"))     # ไอคอน
 save(enemy_frames[0], os.path.join(PRE, "enemy_down.png"), scale=8)
 save(enemy_frames[2], os.path.join(PRE, "enemy_side.png"), scale=8)
 print(f"  enemy_walk: {enemy_frames[0].count_colors()} colors, 6 frames")
+
+spider_frames = [spider_frame(d, s) for d in ("down", "side", "up") for s in (0, 1)]
+save_sheet(spider_frames, os.path.join(SPR, "spider_walk.png"), cols=6, scale=1,
+           manifest=os.path.join(SPR, "spider_walk.json"), fps=10, name="walk")
+save(spider_frames[0], os.path.join(SPR, "spider_icon.png"))
+save(spider_frames[0], os.path.join(PRE, "spider_down.png"), scale=8)
+
+roach_frames = [roach_frame(d, s) for d in ("down", "side", "up") for s in (0, 1)]
+save_sheet(roach_frames, os.path.join(SPR, "roach_walk.png"), cols=6, scale=1,
+           manifest=os.path.join(SPR, "roach_walk.json"), fps=12, name="walk")
+save(roach_frames[0], os.path.join(PRE, "roach_down.png"), scale=8)
 
 ghost_frames = [ghost_frame(d, s) for d in ("down", "side", "up") for s in (0, 1)]
 save_sheet(ghost_frames, os.path.join(SPR, "ghost_walk.png"), cols=6, scale=1,

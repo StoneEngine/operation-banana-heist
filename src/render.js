@@ -15,6 +15,9 @@ const SPRITES = {
   hero_walk: 'hero_walk.png',
   enemy_walk: 'enemy_walk.png',
   ghost_walk: 'ghost_walk.png',
+  spider_walk: 'spider_walk.png',
+  roach_walk: 'roach_walk.png',
+  trap: 'trap.png',
   monkey_sleep: 'monkey_sleep.png',
   monkey_awake: 'monkey_awake.png',
   monkey_caught: 'monkey_caught.png',
@@ -28,6 +31,8 @@ const FRAMES = {
   hero_walk: { w: 32, h: 32, cols: 6 },
   enemy_walk: { w: 24, h: 24, cols: 6 },
   ghost_walk: { w: 24, h: 24, cols: 6 },
+  spider_walk: { w: 24, h: 24, cols: 6 },
+  roach_walk: { w: 20, h: 20, cols: 6 },
 };
 const DIR_ROW = { down: 0, side: 2, up: 4 };
 
@@ -179,6 +184,10 @@ function draw(ctx, game) {
     if (offCam(d.x, d.y, cam, 60)) continue;
     actors.push({ y: d.y, draw: () => ctx.drawImage(img[d.kind], Math.round(d.x - 24), Math.round(d.y - 24), 48, 48) });
   }
+  for (const tr of arena.traps) {
+    if (offCam(tr.x, tr.y, cam, 60)) continue;
+    actors.push({ y: tr.y - 1, draw: () => drawTrap(ctx, tr) });
+  }
   for (const b of arena.bananas) actors.push({ y: b.y, draw: () => drawBanana(ctx, b) });
   for (const e of arena.enemies) actors.push({ y: e.y, draw: () => drawEnemy(ctx, e) });
   actors.push({ y: player.y, draw: () => drawHero(ctx, player, time) });
@@ -266,11 +275,16 @@ function drawEnemy(ctx, e) {
   ctx.save();
   if (e.kind === 'ghost') ctx.globalAlpha = 0.78;
   if (e.hurtT > 0) ctx.globalAlpha = 0.45;
-  pxFrame(ctx, t.sheet, DIR_ROW[e.dir] + (Math.floor(e.anim) % 2), e.x, e.y + 20, CFG.ENEMY_SCALE,
+  pxFrame(ctx, t.sheet, DIR_ROW[e.dir] + (Math.floor(e.anim) % 2), e.x, e.y + 20, t.scale || CFG.ENEMY_SCALE,
     e.dir === 'side' && e.face < 0);
   ctx.restore();
   if (e.hp < t.hp) hpBar(ctx, e.x, e.y - 30, 30, e.hp / t.hp, '#ff6b5a');
-  if (SHOW_HITBOX) ring(ctx, e.x, e.y, CFG.ENEMY_R, '#ff4b3e');
+  if (SHOW_HITBOX) ring(ctx, e.x, e.y, t.r || CFG.ENEMY_R, '#ff4b3e');
+}
+
+function drawTrap(ctx, tr) {
+  ctx.drawImage(img.trap, Math.round(tr.x - 24), Math.round(tr.y - 22), 48, 48);
+  if (SHOW_HITBOX) ring(ctx, tr.x, tr.y, CFG.TRAP_R, '#ffa23e');
 }
 
 function drawBanana(ctx, b) {
@@ -341,10 +355,13 @@ function drawHud(ctx, { round, arena, player, weapon }) {
   ctx.drawImage(img.banana, 26, 22, 42, 42);
   label(ctx, `${round.bananas}`, 78, 44, { size: 34, color: '#ffd94a' });
 
-  const left = Math.ceil(round.time);
-  panel(ctx, CFG.W / 2 - 78, 14, 156, 58);
-  label(ctx, left <= 5 ? `${left}` : `0:${String(left).padStart(2, '0')}`, CFG.W / 2, 44,
-    { size: 36, color: left <= 5 ? '#ff8b7a' : '#fff1e0', align: 'center' });
+  // นาฬิกาเดินขึ้น (ไม่มีจับเวลาแล้ว) + เป้าหมายถัดไป
+  const s = Math.floor(round.elapsed);
+  panel(ctx, CFG.W / 2 - 110, 14, 220, 58);
+  const goal = arena.bossOut ? 'ล้มบอสคอง!' : `บอสที่ ${CFG.BOSS_AT} กล้วย`;
+  label(ctx, `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`, CFG.W / 2, 34,
+    { size: 26, align: 'center' });
+  label(ctx, goal, CFG.W / 2, 58, { size: 16, align: 'center', color: arena.bossOut ? '#ff8b7a' : '#ffd94a' });
 
   panel(ctx, CFG.W - 268, 14, 252, 58);
   label(ctx, `ดาว Lv${weapon.level} · ลิง ${arena.enemies.length}`, CFG.W - 252, 44, { size: 22 });

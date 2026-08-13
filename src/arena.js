@@ -7,10 +7,13 @@ class Arena {
     this.rocks = [];
     this.stars = [];
     this.bananas = [];
+    this.traps = [];
     this.spawnT = CFG.SPAWN_FIRST;
+    this.trapT = CFG.TRAP_AFTER;
     this.bananaT = 0.2;
     this.kills = 0;
     this.bossOut = false;
+    this.bossDead = false;
   }
 
   /** บอสคองโผล่ครั้งเดียว ตอนเก็บกล้วยครบ CFG.BOSS_AT */
@@ -31,10 +34,15 @@ class Arena {
   }
 
   // ---------- เกิดของ ----------
+  /** สุ่มชนิดศัตรูตามน้ำหนัก เฉพาะชนิดที่ถึงเวลาโผล่แล้ว */
   pickType(elapsed) {
-    const r = Math.random();
-    if (elapsed >= CFG.ENEMY_TYPES.ghost.after && r < CFG.GHOST_SHARE) return 'ghost';
-    if (elapsed >= CFG.ENEMY_TYPES.thrower.after && r < CFG.GHOST_SHARE + CFG.THROWER_SHARE) return 'thrower';
+    const pool = Object.entries(CFG.ENEMY_TYPES).filter(([, t]) => elapsed >= t.after);
+    const total = pool.reduce((s, [, t]) => s + t.weight, 0);
+    let r = Math.random() * total;
+    for (const [kind, t] of pool) {
+      r -= t.weight;
+      if (r <= 0) return kind;
+    }
     return 'grunt';
   }
 
@@ -106,6 +114,20 @@ class Arena {
       this.bananaT = rand(...CFG.BANANA_GAP);
       if (this.bananas.length < CFG.BANANA_MAX) this.spawnBanana(hero);
     }
+    // กับดักวางนิ่ง ไม่วางทับตัวผู้เล่น
+    this.trapT -= dt;
+    if (this.trapT <= 0) {
+      this.trapT = rand(...CFG.TRAP_GAP);
+      if (this.traps.length < CFG.TRAP_MAX) {
+        const a = rand(0, Math.PI * 2);
+        const d = rand(...CFG.TRAP_SPAWN_R);
+        this.traps.push({
+          x: clampNum(hero.x + Math.cos(a) * d, 40, CFG.WORLD.w - 40),
+          y: clampNum(hero.y + Math.sin(a) * d, 40, CFG.WORLD.h - 40),
+          hp: 1,
+        });
+      }
+    }
   }
 
   /** ท่าบอส: สลับ "ปาหินกระจายรอบตัว" กับ "ก้อนใหญ่ลูกเดียว" */
@@ -162,8 +184,13 @@ class Arena {
       if (t.keep) move = d > t.keep ? 1 : (d < t.keep * 0.7 ? -1 : 0);
       e.x += (dx / d) * e.speed * dt * move;
       e.y += (dy / d) * e.speed * dt * move;
+      if (t.wiggle) {                       // แมงสาบวิ่งส่ายไปมา ไม่พุ่งตรง
+        e.wob = (e.wob || Math.random() * 6) + dt * 9;
+        e.x += (-dy / d) * Math.sin(e.wob) * e.speed * dt * t.wiggle * 0.4;
+        e.y += (dx / d) * Math.sin(e.wob) * e.speed * dt * t.wiggle * 0.4;
+      }
 
-      e.anim += dt * (e.kind === 'ghost' ? 3 : 6);
+      e.anim += dt * (e.kind === 'ghost' ? 3 : (e.kind === 'roach' ? 12 : 6));
       if (Math.abs(dx) > Math.abs(dy) * 0.8) {
         e.dir = 'side';
         e.face = dx > 0 ? 1 : -1;
@@ -214,8 +241,19 @@ class Arena {
       s.rot += dt * 22;
       s.life -= dt;
       // ชนศัตรู
+      // ดาวทำลายกับดักได้ด้วย
+      for (let i = this.traps.length - 1; i >= 0; i--) {
+        const tr = this.traps[i];
+        if (Math.hypot(tr.x - s.x, tr.y - s.y) <= CFG.STAR_R + CFG.TRAP_R) {
+          this.traps.splice(i, 1);
+          fx.puff(tr.x, tr.y, false);
+          sfx.kill();
+          s.pierce -= 1;
+          if (s.pierce <= 0) s.life = 0;
+        }
+      }
       for (const e of this.enemies) {
-        const er = e.boss ? CFG.BOSS.r : CFG.ENEMY_R;
+        const er = e.boss ? CFG.BOSS.r : (CFG.ENEMY_TYPES[e.kind].r || CFG.ENEMY_R);
         if (e.hp <= 0 || s.hits.has(e)) continue;
         if (Math.hypot(e.x - s.x, e.y - s.y) <= CFG.STAR_R + er) {
           s.hits.add(e);
@@ -225,7 +263,10 @@ class Arena {
             this.kills += 1;
             this.dropBananas(e.x, e.y, e.boss ? CFG.BOSS.drop : CFG.ENEMY_TYPES[e.kind].drop);
             fx.puff(e.x, e.y, e.kind === 'ghost');
-            if (e.boss) fx.text(e.x, e.y - 80, 'ล้มบอสคองได้!', '#ffd94a', 48);
+            if (e.boss) {
+              this.bossDead = true;
+              fx.text(e.x, e.y - 80, 'ล้มบอสคองได้!', '#ffd94a', 48);
+            }
             sfx.kill();
           } else {
             sfx.ping();
@@ -306,10 +347,18 @@ class Arena {
         return { x: r.x, y: r.y, kind: r.big ? 'ก้อนใหญ่!' : 'หินโดน!' };
       }
     }
+    for (let i = this.traps.length - 1; i >= 0; i--) {
+      const tr = this.traps[i];
+      if (hero.hitBy(tr.x, tr.y, CFG.TRAP_R)) {
+        this.traps.splice(i, 1);            // เหยียบแล้วกับดักหนีบจนพัง
+        return { x: tr.x, y: tr.y, kind: 'ติดกับดัก!' };
+      }
+    }
+    const NAME = { ghost: 'ผีแตะ!', spider: 'แมงมุมกัด!', roach: 'แมงสาบชน!' };
     for (const e of this.enemies) {
-      if (hero.hitBy(e.x, e.y, e.boss ? CFG.BOSS.r : CFG.ENEMY_R)) {
+      if (hero.hitBy(e.x, e.y, e.boss ? CFG.BOSS.r : (CFG.ENEMY_TYPES[e.kind].r || CFG.ENEMY_R))) {
         if (e.boss) return { x: e.x, y: e.y, kind: 'บอสชน!' };
-        return { x: e.x, y: e.y, kind: e.kind === 'ghost' ? 'ผีแตะ!' : 'โดนจับ!' };
+        return { x: e.x, y: e.y, kind: NAME[e.kind] || 'โดนจับ!' };
       }
     }
     return null;

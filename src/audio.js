@@ -314,6 +314,10 @@ const sfx = {
     bell(1975.53, 0, 0.5, 0.22);
     noiseBurst({ dur: 0.12, gain: 0.12, filter: 'bandpass', freq: 4200, q: 6 });
   },
+  heal() {                                            // ฟื้นเลือดจากกล้วย
+    marimba(783.99, 0);
+    marimba(1046.5, 0.08);
+  },
   bossBig() {                                         // บอสขว้างก้อนใหญ่
     duck(0.2, 0.6);
     drum(90, 40, 0.5, 0.5);

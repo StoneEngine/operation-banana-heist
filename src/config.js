@@ -9,7 +9,6 @@ const CFG = {
   CAM_LERP: 6,                     // ความหนืดของกล้อง (ยิ่งมากยิ่งติดตัว)
 
   // ----- รอบเกม -----
-  ROUND_TIME: 45,          // วินาที
 
   // ----- ตัวเอก จ๋อจิ๋ว -----
   HERO_SPEED: 275,         // px/วินาที
@@ -23,20 +22,28 @@ const CFG = {
   // ----- ศัตรู 3 แบบ -----
   ENEMY_R: 12,
   ENEMY_SCALE: 2,
-  ENEMY_MAX: 46,
-  SPAWN_FIRST: 1.0,
-  SPAWN_GAP: [1.2, 1.8],   // ระยะห่างการเกิดตอนเริ่มเกม
-  SPAWN_SPEEDUP: 0.026,    // ทุกวินาทีที่ผ่านไป ระยะห่างหดลง (เกมเร่งขึ้นเอง)
-  SPAWN_GAP_MIN: 0.22,
-  SPAWN_BATCH_AT: 22,      // เล่นเกินกี่วินาทีแล้วเกิดทีละ 2 ตัว
+  ENEMY_MAX: 20,           // ลดจำนวนศัตรูบนจอ ไม่ให้รกเกินไป
+  SPAWN_FIRST: 1.2,
+  SPAWN_GAP: [1.9, 2.8],   // ระยะห่างการเกิดตอนเริ่มเกม
+  SPAWN_SPEEDUP: 0.02,     // ทุกวินาทีที่ผ่านไป ระยะห่างหดลง (เกมเร่งขึ้นเอง)
+  SPAWN_GAP_MIN: 0.6,
+  SPAWN_BATCH_AT: 32,      // เล่นเกินกี่วินาทีแล้วเกิดทีละ 2 ตัว
   ENEMY_TYPES: {
-    // hp = โดนดาวกี่ดอกถึงตาย · drop = กล้วยที่ทิ้งไว้ตอนตาย
-    grunt: { speed: [78, 108], hp: 1, drop: 1, sheet: 'enemy_walk', rock: null, after: 0 },
-    thrower: { speed: [52, 70], hp: 2, drop: 2, sheet: 'enemy_walk', rock: [1.6, 2.8], keep: 230, after: 6 },
-    ghost: { speed: [126, 158], hp: 2, drop: 3, sheet: 'ghost_walk', rock: null, after: 15 },
+    // hp = โดนดาวกี่ดอกถึงตาย · drop = กล้วยที่ทิ้งไว้ตอนตาย · after = โผล่หลังวินาทีที่เท่าไหร่
+    // weight = น้ำหนักการสุ่ม (เทียบกันเอง)
+    grunt: { speed: [78, 105], hp: 1, drop: 1, sheet: 'enemy_walk', scale: 2, r: 12, after: 0, weight: 3 },
+    roach: { speed: [150, 190], hp: 1, drop: 1, sheet: 'roach_walk', scale: 2, r: 10, after: 4, weight: 2.4, wiggle: 2.6 },
+    spider: { speed: [104, 132], hp: 2, drop: 2, sheet: 'spider_walk', scale: 2, r: 13, after: 8, weight: 2 },
+    thrower: { speed: [52, 70], hp: 2, drop: 2, sheet: 'enemy_walk', scale: 2, r: 12, rock: [1.6, 2.8], keep: 240, after: 10, weight: 1.6 },
+    ghost: { speed: [126, 158], hp: 2, drop: 3, sheet: 'ghost_walk', scale: 2, r: 12, after: 16, weight: 1.6 },
   },
-  GHOST_SHARE: 0.34,       // สัดส่วนที่เกิดเป็นลิงผี หลังพ้นเวลา after
-  THROWER_SHARE: 0.3,
+
+  // ----- กับดักวางนิ่งบนพื้น -----
+  TRAP_GAP: [2.6, 4.2],
+  TRAP_MAX: 9,
+  TRAP_R: 16,
+  TRAP_AFTER: 6,           // เริ่มมีกับดักหลังกี่วินาที
+  TRAP_SPAWN_R: [180, 620],// ระยะจากตัวผู้เล่นตอนวาง (ไม่วางทับตัว)
 
   // ----- บอสคอง โผล่เมื่อเก็บกล้วยครบ -----
   BOSS_AT: 50,
@@ -80,6 +87,7 @@ const CFG = {
   BANANA_LIFE: 14,         // อยู่บนพื้นกี่วินาทีก่อนหาย
   GOLD_CHANCE: 0.09,       // โอกาสเป็นกล้วยทอง
   GOLD_VALUE: 5,
+  HEAL_EVERY: 15,          // เก็บกล้วยครบเท่านี้ = ฟื้นเลือด 1 หน่วย
   MAGNET_R: 62,            // เข้าใกล้เท่านี้ กล้วยวิ่งเข้าหาเราเอง
 
   // ----- บทลงโทษ -----
