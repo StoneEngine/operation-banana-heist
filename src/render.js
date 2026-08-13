@@ -196,7 +196,7 @@ function draw(ctx, game) {
   pxFrame(ctx, 'hand', handFrame, player.x - 64, hy, 128);
 
   drawFx(ctx);
-  drawHud(ctx, game);
+  if (game.running) drawHud(ctx, game);   // เมนู/หน้าจบไม่ต้องมี HUD จะได้ไม่รกหลังป้าย
 
   ctx.restore();
 

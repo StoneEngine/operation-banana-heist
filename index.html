@@ -13,16 +13,29 @@
   <div id="loading" class="overlay">กำลังโหลด…</div>
 
   <div id="menu" class="overlay" hidden>
-    <h1>🍌 ปฏิบัติการปล้นกล้วย</h1>
-    <p class="sub">OPERATION BANANA HEIST · แข่งขโมยกล้วยจากลิง</p>
-    <ul class="rules">
-      <li>ลิง <b>หลับ</b> = กดขโมยได้</li>
-      <li>เห็น <b class="warn">!</b> = ใกล้ตื่นแล้ว รีบหยุด</li>
-      <li>ลิง <b class="bad">ตื่น</b> แล้วยังกด = โดนจับ เสียกล้วย 20%</li>
-      <li>กล้วยทอง = คะแนน x5 · วิทยุ = ลิงหลับต่อ</li>
+    <div class="beam" aria-hidden="true"></div>
+
+    <!-- ป้ายไม้แขวนเชือก แกว่งเบาๆ = ป้ายประกาศแผนปล้นของหมู่บ้าน -->
+    <div class="signwrap">
+      <span class="rope rope-l" aria-hidden="true"></span>
+      <span class="rope rope-r" aria-hidden="true"></span>
+      <div class="sign">
+        <img class="sign-banana" src="./assets/sprites/banana.png" alt="">
+        <h1>ปฏิบัติการปล้นกล้วย</h1>
+        <p class="sub">OPERATION BANANA HEIST</p>
+      </div>
+    </div>
+
+    <ul class="chips">
+      <li><img src="./assets/sprites/monkey_sleep.png" alt=""><b>หลับ</b><span>กดขโมยได้</span></li>
+      <li><img src="./assets/sprites/monkey_warn.png" alt=""><b class="warn">ใกล้ตื่น</b><span>รีบหยุด</span></li>
+      <li><img src="./assets/sprites/monkey_awake.png" alt=""><b class="bad">ตื่น</b><span>โดนจับ −20%</span></li>
+      <li><img src="./assets/sprites/banana_gold.png" alt=""><b>กล้วยทอง</b><span>คะแนน ×5</span></li>
+      <li><img src="./assets/sprites/radio.png" alt=""><b>วิทยุ</b><span>หลับต่อ 5 วิ</span></li>
     </ul>
-    <p class="best">สถิติสูงสุด: <b id="menu-best">0</b> ลูก</p>
-    <button id="btn-play" class="big">เริ่มขโมย (45 วิ)</button>
+
+    <p class="meta">สถิติสูงสุด <b id="menu-best">0</b> ลูก · รอบละ 45 วินาที</p>
+    <button id="btn-play" class="big">▶ เริ่มขโมย</button>
     <p class="hint">คลิก / แตะ / เว้นวรรค = ยื่นมือหยิบ</p>
   </div>
 

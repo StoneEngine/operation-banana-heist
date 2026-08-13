@@ -76,19 +76,152 @@ h2 {
 
 .sub { margin: 0; font-size: clamp(13px, 2.4vw, 22px); opacity: .85; }
 
-.rules {
-  list-style: none;
-  margin: .4em 0;
-  padding: 0;
-  font-size: clamp(11px, 2vw, 18px);
-  line-height: 1.9;
-  opacity: .95;
+/* ---------- หน้าเริ่มเกม: ป้ายไม้แขวนเชือก + ลำแสงสปอตไลต์ ---------- */
+#menu {
+  justify-content: center;
+  gap: 2.4vh;
+  /* จางลงหน่อยให้เห็นลิงหลับหายใจอยู่ข้างหลัง = attract mode */
+  background: rgba(10, 8, 6, .66);
+  overflow: hidden;
 }
 
-.rules .warn { color: #ff4b3e; }
-.rules .bad { color: #ff8b7a; }
+/* ลำแสงจากด้านบนส่องลงป้าย */
+.beam {
+  position: absolute;
+  top: -6%;
+  left: 50%;
+  width: 76%;
+  height: 78%;
+  transform: translateX(-50%);
+  clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%);
+  background: linear-gradient(180deg, rgba(255, 217, 74, .22), rgba(255, 217, 74, 0) 78%);
+  pointer-events: none;
+  animation: beamflicker 5s ease-in-out infinite alternate;
+}
 
-.best, .score, .small, .hint { margin: 0; }
+@keyframes beamflicker { from { opacity: .75; } to { opacity: 1; } }
+
+.signwrap {
+  position: relative;
+  padding-top: 5.5vh;              /* เว้นที่ให้เชือก */
+  transform-origin: 50% 0;
+  animation: signsway 5.5s ease-in-out infinite alternate;
+}
+
+@keyframes signsway {
+  from { transform: rotate(-1.4deg); }
+  to { transform: rotate(1.4deg); }
+}
+
+.rope {
+  position: absolute;
+  top: 0;
+  width: 4px;
+  height: 5.5vh;
+  background: repeating-linear-gradient(180deg, #b98a4a 0 4px, #8a6532 4px 8px);
+  box-shadow: 0 0 0 2px var(--ink);
+}
+
+.rope-l { left: 14%; transform: rotate(6deg); }
+.rope-r { right: 14%; transform: rotate(-6deg); }
+
+.sign {
+  position: relative;
+  padding: 1.6vh 5vw 2vh;
+  background:
+    repeating-linear-gradient(180deg, rgba(0, 0, 0, .12) 0 2px, rgba(0, 0, 0, 0) 2px 14px),
+    linear-gradient(#a9703f, #7d4f28);
+  border: 5px solid var(--ink);
+  border-radius: 6px;
+  box-shadow: 0 10px 0 rgba(0, 0, 0, .45), inset 0 0 0 3px rgba(255, 226, 160, .18);
+}
+
+/* หมุดตอกสี่มุมป้าย */
+.sign::before, .sign::after {
+  content: "";
+  position: absolute;
+  top: 8px;
+  width: 8px;
+  height: 8px;
+  background: #e8c88a;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+}
+
+.sign::before { left: 10px; }
+.sign::after { right: 10px; }
+
+.sign h1 { font-size: clamp(26px, 5.6vw, 54px); }
+.sign .sub { letter-spacing: 3px; opacity: .7; font-size: clamp(10px, 1.8vw, 16px); }
+
+/* กล้วยห้อยมุมป้าย */
+.sign-banana {
+  position: absolute;
+  right: -3%;
+  top: -14%;
+  width: clamp(28px, 6vw, 56px);
+  image-rendering: pixelated;
+  transform: rotate(18deg);
+  filter: drop-shadow(0 4px 4px rgba(0, 0, 0, .5));
+  animation: bananaswing 2.8s ease-in-out infinite alternate;
+}
+
+@keyframes bananaswing {
+  from { transform: rotate(10deg); }
+  to { transform: rotate(26deg); }
+}
+
+/* กฎของเกมเป็นชิปไอคอน ใช้ sprite จริง อ่านเร็วกว่าบุลเลต */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.4vw;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.chips li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: clamp(64px, 15vw, 132px);
+  padding: .5em .3em;
+  background: rgba(30, 22, 15, .8);
+  border: 3px solid var(--ink);
+  border-radius: 10px;
+}
+
+.chips img {
+  width: clamp(22px, 4.4vw, 40px);
+  height: clamp(22px, 4.4vw, 40px);
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.chips b { font-size: clamp(10px, 1.9vw, 16px); color: var(--yellow); }
+.chips span { font-size: clamp(9px, 1.6vw, 14px); opacity: .78; }
+.chips .warn { color: #ff9c3e; }
+.chips .bad { color: #ff8b7a; }
+
+.meta { margin: 0; font-size: clamp(11px, 2vw, 17px); opacity: .9; }
+.meta b { color: var(--yellow); }
+
+#menu .big { animation: playpulse 1.4s ease-in-out infinite alternate; }
+
+/* เต้นด้วยแสงอย่างเดียว ไม่ขยับตำแหน่ง — ปุ่มที่ขยับตลอดกดพลาดง่ายบนมือถือ */
+@keyframes playpulse {
+  from { box-shadow: 0 6px 0 #b98a1a; }
+  to { box-shadow: 0 6px 0 #b98a1a, 0 0 30px rgba(255, 217, 74, .6); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signwrap, .sign-banana, .beam, #menu .big, .newbest { animation: none; }
+}
+
+.score, .small, .hint { margin: 0; }
 .score { font-size: clamp(16px, 3.4vw, 30px); }
 .score b { color: var(--yellow); font-size: 1.4em; }
 .small { font-size: clamp(11px, 2vw, 17px); opacity: .8; }
