@@ -223,22 +223,39 @@ ROACH = ramp("#7a4a22", steps=5)
 
 
 def spider_frame(dir_, step):
-    """แมงมุม 24x24 — ขา 8 ขาขยับสลับ ตาแดง"""
+    """แมงมุม 24x24 — ตัวเข้มเกือบดำ ขนตามขา 8 ขาเรียวปลายแหลม เขี้ยวยื่น ตาหลายดวงแดงเรือง"""
     c = Canvas(24, 24)
     leg = 1 if step else -1
-    c.ellipse(4, 18, 16, 4, "#2f4a28")                    # เงา
-    for i, dy in enumerate((6, 10, 14)):                  # ขาซ้าย-ขวา
-        off = leg if i % 2 else -leg
-        c.line(8, dy + 2, 1, dy + off, SPIDER[1])
-        c.line(15, dy + 2, 22, dy + off, SPIDER[1])
-    c.ellipse(5, 6, 14, 12, SPIDER[3])                    # ท้อง
-    c.ellipse(8, 4, 8, 7, SPIDER[4])                      # หัว
-    c.ellipse(7, 9, 10, 6, SPIDER[2])                     # ลายหลัง
-    c.outline("#1b1526", diagonal=False)
-    if dir_ != "up":                                      # ตาแดง 4 ดวง
-        for ex in (9, 13):
-            c.set(ex, 6, "#ff3b3b")
-            c.set(ex, 8, "#ff7b7b")
+    BODY = ramp("#241c1c", steps=5)                       # เข้มเกือบดำ สมจริงกว่าสีม่วง
+    c.ellipse(3, 19, 18, 3, "#1a2418")                    # เงา
+
+    # ขา 8 ขา หักข้อ 2 ท่อน (เรียบง่ายกว่าเดิม กันเส้นซ้อนจนดูเป็นก้อนขาว)
+    joints = ((6, -1), (9, 1), (13, 1), (16, -1))
+    for base_y, bias in joints:
+        off = (leg if bias > 0 else -leg) * 2
+        knee_l = (1, base_y + off)
+        knee_r = (23, base_y + off)
+        tip_l = (0, min(23, max(0, base_y + off + 5 * bias)))
+        tip_r = (23, min(23, max(0, base_y + off + 5 * bias)))
+        for d in (0, 1):
+            c.line(8, base_y + d, knee_l[0], knee_l[1] + d, BODY[1])
+            c.line(16, base_y + d, knee_r[0], knee_r[1] + d, BODY[1])
+            c.line(knee_l[0], knee_l[1] + d, tip_l[0], tip_l[1] + d, BODY[0])
+            c.line(knee_r[0], knee_r[1] + d, tip_r[0], tip_r[1] + d, BODY[0])
+
+    c.ellipse(5, 6, 14, 13, BODY[2])                      # ท้องกลมใหญ่
+    c.ellipse(6, 8, 12, 9, BODY[3])
+    c.ellipse(8, 15, 8, 5, BODY[1])                       # ลายจุดใต้ท้อง
+    c.ellipse(7, 3, 9, 7, BODY[4])                        # หัว/เซฟาโลทอแรกซ์
+    c.outline("#120d0d", diagonal=False)
+
+    if dir_ != "up":
+        for ex in (8, 13):                                # เขี้ยวคู่หน้ายื่นลงมา
+            c.line(ex, 8, ex - 1, 11, "#160f0f")
+            c.set(ex - 1, 11, "#ff3b3b")
+        for ex, ey in ((7, 4), (10, 3), (13, 4), (9, 6), (12, 6)):  # ตาหลายดวงไม่เท่ากัน
+            c.set(ex, ey, "#ff2b2b")
+        c.set(9, 6, "#ff8b7a")
     return c
 
 

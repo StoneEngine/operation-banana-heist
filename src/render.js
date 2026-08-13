@@ -78,15 +78,20 @@ const ZONE_H = () => CFG.WORLD.h / CFG.ZONE_ROWS;
 
 // ---------- เอฟเฟกต์ ----------
 const fx = {
-  texts: [], pops: [], sparks: [], puffs: [], shake: 0, flash: 0,
+  texts: [], pops: [], sparks: [], puffs: [], blasts: [], trails: [], shake: 0, flash: 0,
 
-  reset() { this.texts = []; this.pops = []; this.sparks = []; this.puffs = []; this.shake = 0; this.flash = 0; },
+  reset() {
+    this.texts = []; this.pops = []; this.sparks = []; this.puffs = [];
+    this.blasts = []; this.trails = []; this.shake = 0; this.flash = 0;
+  },
 
   text(x, y, msg, color = '#fff1e0', size = 30) {
     this.texts.push({ x, y, msg, color, size, life: 0.9, max: 0.9 });
   },
   pop(x, y, gold) { this.pops.push({ x, y, gold, life: 0.32, max: 0.32 }); },
   puff(x, y, ghost) { this.puffs.push({ x, y, ghost, life: 0.4, max: 0.4 }); },
+  blast(x, y, r) { this.blasts.push({ x, y, r, life: 0.35, max: 0.35 }); },
+  dashTrail(x, y) { this.trails.push({ x, y, life: 0.3, max: 0.3 }); },
   sparkle(x, y) {
     for (let i = 0; i < 12; i++) {
       const a = Math.random() * Math.PI * 2;
@@ -103,6 +108,10 @@ const fx = {
     this.pops = this.pops.filter((p) => p.life > 0);
     for (const p of this.puffs) p.life -= dt;
     this.puffs = this.puffs.filter((p) => p.life > 0);
+    for (const b of this.blasts) b.life -= dt;
+    this.blasts = this.blasts.filter((b) => b.life > 0);
+    for (const t of this.trails) t.life -= dt;
+    this.trails = this.trails.filter((t) => t.life > 0);
     for (const s of this.sparks) { s.life -= dt; s.x += s.vx * dt; s.y += s.vy * dt; s.vx *= 0.93; s.vy *= 0.93; }
     this.sparks = this.sparks.filter((s) => s.life > 0);
   },
@@ -196,6 +205,7 @@ function draw(ctx, game) {
 
   for (const r of arena.rocks) drawRock(ctx, r);
   for (const s of arena.stars) drawStar(ctx, s);
+  drawOrbit(ctx, player, game.weapon);
 
   drawFx(ctx);
   ctx.restore();
@@ -309,6 +319,21 @@ function drawRock(ctx, r) {
   if (SHOW_HITBOX) ring(ctx, r.x, r.y, r.r || CFG.ROCK_R, '#ff4b3e');
 }
 
+function drawOrbit(ctx, hero, weapon) {
+  if (!weapon || weapon.orbitCount <= 0) return;
+  const t = weapon.orbitT || 0;
+  for (let i = 0; i < weapon.orbitCount; i++) {
+    const a = t + (i / weapon.orbitCount) * Math.PI * 2;
+    const x = hero.x + Math.cos(a) * 70;
+    const y = hero.hitY + Math.sin(a) * 70;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(a * 3);
+    ctx.drawImage(img.star, -14, -14, 28, 28);
+    ctx.restore();
+  }
+}
+
 function drawStar(ctx, s) {
   ctx.save();
   ctx.translate(s.x, s.y);
@@ -319,6 +344,26 @@ function drawStar(ctx, s) {
 }
 
 function drawFx(ctx) {
+  for (const b of fx.blasts) {
+    const t = 1 - b.life / b.max;
+    ctx.save();
+    ctx.globalAlpha = (1 - t) * 0.6;
+    ctx.strokeStyle = '#ffd94a';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r * t, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+  for (const t of fx.trails) {
+    ctx.save();
+    ctx.globalAlpha = t.life / t.max * 0.5;
+    ctx.fillStyle = '#9fd8ff';
+    ctx.beginPath();
+    ctx.arc(t.x, t.y, 16, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
   for (const p of fx.puffs) {
     const t = 1 - p.life / p.max;
     ctx.save();
@@ -350,7 +395,34 @@ function drawFx(ctx) {
   }
 }
 
-function drawHud(ctx, { round, arena, player, weapon }) {
+function skillSlot(ctx, x, y, id, def, skills) {
+  const lv = skills.lv[id];
+  const cd = skills.cd[id];
+  const ready = cd <= 0;
+  panel(ctx, x, y, 74, 74, ready ? 'rgba(58,44,20,0.85)' : 'rgba(20,14,10,0.85)');
+  ctx.save();
+  if (!ready) ctx.globalAlpha = 0.4;
+  ctx.drawImage(img[def.icon], x + 15, y + 8, 44, 44);
+  ctx.restore();
+  label(ctx, def.key, x + 10, y + 12, { size: 15, color: '#ffd94a' });
+  label(ctx, `Lv${lv}`, x + 64, y + 12, { size: 13, align: 'right' });
+  if (!ready) {
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(x, y, 74, 74 * (cd / def.cool(lv)));
+    label(ctx, cd.toFixed(1), x + 37, y + 60, { size: 16, align: 'center', color: '#ff8b7a' });
+  }
+}
+
+function drawSkillBar(ctx, skills) {
+  const ids = ['bomb', 'dash', 'storm'];
+  const w = 74, gap = 8;
+  const total = ids.length * w + (ids.length - 1) * gap;
+  let x = CFG.W / 2 - total / 2;
+  const y = CFG.H - 90;
+  for (const id of ids) { skillSlot(ctx, x, y, id, SKILL_DEFS[id], skills); x += w + gap; }
+}
+
+function drawHud(ctx, { round, arena, player, weapon, skills }) {
   panel(ctx, 16, 14, 236, 58);
   ctx.drawImage(img.banana, 26, 22, 42, 42);
   label(ctx, `${round.bananas}`, 78, 44, { size: 34, color: '#ffd94a' });
@@ -373,4 +445,6 @@ function drawHud(ctx, { round, arena, player, weapon }) {
   const cd = player.parryCool;
   label(ctx, cd > 0 ? `สะท้อน ${cd.toFixed(1)}s` : 'สะท้อน พร้อม (คลิกขวา)', 30, CFG.H - 28,
     { size: 17, color: cd > 0 ? '#ff8b7a' : '#9fd8ff' });
+
+  drawSkillBar(ctx, skills);
 }

@@ -314,6 +314,18 @@ const sfx = {
     bell(1975.53, 0, 0.5, 0.22);
     noiseBurst({ dur: 0.12, gain: 0.12, filter: 'bandpass', freq: 4200, q: 6 });
   },
+  bomb() {                                            // สกิล Q ระเบิดกล้วย
+    duck(0.2, 0.6);
+    drum(160, 55, 0.4, 0.55);
+    noiseBurst({ dur: 0.35, gain: 0.16, filter: 'highpass', freq: 2200, sweepTo: 500 });
+  },
+  dash() {                                            // สกิล E พุ่งตัว
+    noiseBurst({ dur: 0.14, gain: 0.1, filter: 'bandpass', freq: 1600, q: 3, sweepTo: 3200 });
+  },
+  storm() {                                           // สกิล R พายุดาว
+    duck(0.2, 0.5);
+    for (let i = 0; i < 4; i++) marimba(880 + i * 140, i * 0.03, 0.3);
+  },
   heal() {                                            // ฟื้นเลือดจากกล้วย
     marimba(783.99, 0);
     marimba(1046.5, 0.08);

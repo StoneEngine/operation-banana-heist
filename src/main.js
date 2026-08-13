@@ -24,6 +24,7 @@ const game = {
   round: new Round(),
   arena: new Arena(),
   weapon: new Weapon(),
+  skills: new Skills(),
   cam: { x: 0, y: 0 },
   nextUpgradeAt: CFG.UPGRADE_EVERY,
   healAcc: 0,             // กล้วยสะสมสำหรับฟื้นเลือด
@@ -96,6 +97,19 @@ window.addEventListener('keydown', (e) => {
     pushMove();
     return;
   }
+  // สกิล Q / E / R
+  const SKILL_KEYS = { KeyQ: 'bomb', KeyE: 'dash', KeyR: 'storm' };
+  if (SKILL_KEYS[e.code]) {
+    e.preventDefault();
+    sfx.unlock();
+    if (game.running && !game.paused) {
+      const id = SKILL_KEYS[e.code];
+      if (!game.skills.cast(id, game.player, game.arena)) {
+        fx.text(game.player.x, game.player.hitY - 60, 'ยังไม่พร้อม', '#ff8b7a', 24);
+      }
+    }
+    return;
+  }
   // เลือกอัปเกรดด้วยเลข 1-3 ก็ได้
   if (game.paused && ['Digit1', 'Digit2', 'Digit3'].includes(e.code)) {
     const i = Number(e.code.slice(-1)) - 1;
@@ -141,7 +155,7 @@ function openUpgrade() {
     btn.innerHTML = `<img src="./assets/sprites/${up.icon}.png" alt="">`
       + `<b>${i + 1}. ${up.title}</b><span>${up.desc}</span>`;
     btn.addEventListener('click', () => {
-      game.weapon.apply(up.id, game.player);
+      game.weapon.apply(up.id, game.player, game.skills);
       ui.upgrade.hidden = true;
       game.paused = false;
       sfx.gold();
@@ -171,6 +185,7 @@ function start() {
   game.player.reset();
   game.arena.reset();
   game.weapon.reset();
+  game.skills.reset();
   game.player.x = CFG.WORLD.w / 2;
   game.player.y = CFG.WORLD.h / 2;
   game.cam.x = clampNum(game.player.x - CFG.W / 2, 0, CFG.WORLD.w - CFG.W);
@@ -215,6 +230,7 @@ function frame(now) {
 
   if (game.running && !game.paused) {
     game.player.update(dt);
+    game.skills.update(dt);
     updateCam(dt);
     game.arena.update(dt, game.player, game.round, game.cam, game.weapon, firing, aim);
 

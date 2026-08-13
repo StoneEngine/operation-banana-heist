@@ -98,7 +98,7 @@ class Arena {
     this.tickParry(hero);
     this.moveStars(dt);
     this.moveBananas(dt, hero);
-    weapon.update(dt, hero, this, firing, aim);
+    weapon.update(dt, hero, this, firing, aim, round.elapsed);
   }
 
   tickSpawns(dt, hero, round, cam) {
@@ -236,6 +236,19 @@ class Arena {
 
   moveStars(dt) {
     for (const s of this.stars) {
+      // บูมเมอแรง: บินไปครึ่งอายุ แล้ววกกลับหาผู้เล่น ฟันซ้ำตัวเดิมได้อีกรอบ
+      const halfLife = (s.boomerang ? CFG.STAR_LIFE * 2 : CFG.STAR_LIFE) * 0.5;
+      if (s.boomerang && !s.returning && s.life <= halfLife) {
+        s.returning = true;
+        s.hits.clear();
+      }
+      if (s.returning && s.owner) {
+        const dx = s.owner.x - s.x, dy = s.owner.hitY - s.y;
+        const d = Math.hypot(dx, dy) || 1;
+        s.vx = (dx / d) * CFG.STAR_SPEED;
+        s.vy = (dy / d) * CFG.STAR_SPEED;
+        if (d < 24) { s.life = 0; continue; }   // กลับถึงตัวแล้วหาย
+      }
       s.x += s.vx * dt;
       s.y += s.vy * dt;
       s.rot += dt * 22;
