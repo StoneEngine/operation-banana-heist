@@ -1,0 +1,17 @@
+{
+  "image": "hero_walk.png",
+  "frameWidth": 32,
+  "frameHeight": 32,
+  "columns": 6,
+  "rows": 1,
+  "count": 6,
+  "scale": 1,
+  "animations": {
+    "walk": {
+      "from": 0,
+      "to": 5,
+      "fps": 8,
+      "loop": true
+    }
+  }
+}

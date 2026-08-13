@@ -1,28 +1,32 @@
-// วาดทุกอย่างลง canvas: ฉาก, ลิง, มือ, ไอเทม, เอฟเฟกต์, HUD
+// วาดสนาม top-down: พื้นหญ้าปูกระเบื้อง, ของตกแต่ง, กล้วย, ลิง, ก้อนหิน, ตัวเอก, เอฟเฟกต์, HUD
 const SPRITES = {
-  bg: 'bg.png',
+  ground_tile: 'ground_tile.png',
+  bush: 'bush.png',
+  stone: 'stone.png',
+  rock: 'rock.png',
+  banana: 'banana.png',
+  banana_gold: 'banana_gold.png',
+  banana_peel: 'banana_peel.png',
+  hero: 'hero.png',
+  hero_walk: 'hero_walk.png',
+  enemy_walk: 'enemy_walk.png',
   monkey_sleep: 'monkey_sleep.png',
-  monkey_warn: 'monkey_warn.png',
   monkey_awake: 'monkey_awake.png',
   monkey_caught: 'monkey_caught.png',
-  banana: 'banana.png',
-  banana_peel: 'banana_peel.png',
-  banana_gold: 'banana_gold.png',
   basket: 'basket.png',
-  hand: 'hand.png',
-  hero: 'hero.png',
-  radio: 'radio.png',
 };
-
-// ?hitbox=1 ท้าย URL = โชว์วงกลม hitbox ทั้งของตัวเอกและของที่ปามา (ไว้จูน/ดีบั๊ก)
-const SHOW_HITBOX = typeof location !== 'undefined' && /[?&]hitbox=1/.test(location.search);
 
 const img = {};
 
-// เฟรม sprite sheet (ต้องตรงกับ cols/frame size ที่ build script export ไว้ — ดู assets/src/build_props.py)
+// sprite sheet: เรียง down0 down1 side0 side1 up0 up1 (ดู assets/src/build_top.py)
 const FRAMES = {
-  hand: { w: 32, h: 32, cols: 4, count: 4 },
+  hero_walk: { w: 32, h: 32, cols: 6 },
+  enemy_walk: { w: 24, h: 24, cols: 6 },
 };
+const DIR_ROW = { down: 0, side: 2, up: 4 };
+
+// ?hitbox=1 ท้าย URL = โชว์วง hitbox ทั้งหมด (ไว้จูน/ดีบั๊ก)
+const SHOW_HITBOX = typeof location !== 'undefined' && /[?&]hitbox=1/.test(location.search);
 
 function loadSprites() {
   const jobs = Object.entries(SPRITES).map(([key, file]) => new Promise((res, rej) => {
@@ -34,50 +38,36 @@ function loadSprites() {
   return Promise.all(jobs);
 }
 
-// ---------- ตำแหน่งของฉาก ----------
-const GROUND_Y = 416;
-const MONKEY = { x: 320, y: 106, size: 320 };
-const BASKET = { x: 792, y: 300, size: 128 };
-const PILE_Y = GROUND_Y - 8;
-const CX = MONKEY.x + MONKEY.size / 2;   // จุดกึ่งกลางลิง
-const STEAL = { x: CX, y: PILE_Y - 6 };  // ศูนย์กลางเขตกองกล้วย
+// ---------- ของตกแต่งพื้น (ตำแหน่งคงที่ สุ่มครั้งเดียวตอนโหลด) ----------
+const DECOR = [];
+(function seedDecor() {
+  let s = 1337;
+  const rnd = () => (s = (s * 1103515245 + 12345) % 2147483648) / 2147483648;
+  for (let i = 0; i < 16; i++) {
+    DECOR.push({
+      kind: rnd() < 0.55 ? 'bush' : 'stone',
+      x: 40 + rnd() * (CFG.W - 80),
+      y: 40 + rnd() * (CFG.H - 80),
+    });
+  }
+}());
 
 // ---------- เอฟเฟกต์ ----------
 const fx = {
-  texts: [], flies: [], peels: [], splats: [], shake: 0, flash: 0, sparks: [],
+  texts: [], pops: [], sparks: [], shake: 0, flash: 0,
 
-  reset() {
-    this.texts = []; this.flies = []; this.peels = []; this.splats = [];
-    this.sparks = []; this.shake = 0; this.flash = 0;
-  },
+  reset() { this.texts = []; this.pops = []; this.sparks = []; this.shake = 0; this.flash = 0; },
 
   text(x, y, msg, color = '#fff1e0', size = 30) {
     this.texts.push({ x, y, msg, color, size, life: 0.9, max: 0.9 });
   },
-  fly(x, y, gold = false) {
-    this.flies.push({ x, y, x0: x, y0: y, t: 0, dur: 0.45, gold, spin: Math.random() * 6 });
-  },
-  /** ลิงปาเปลือกกล้วยเข้าหากล้อง — บินโตขึ้นเรื่อยๆ แล้วแปะหน้าจอ */
-  peelBurst(targetX = CFG.W / 2) {
-    for (let i = 0; i < 7; i++) {
-      const x = CX + (Math.random() - 0.5) * 70;
-      const y = MONKEY.y + 40 + Math.random() * 60;
-      const T = 0.42 + Math.random() * 0.16;          // เวลาบินถึงหน้าเรา
-      const tx = targetX + (Math.random() - 0.5) * 620;
-      this.peels.push({
-        x, y, z: 0.35,
-        vx: (tx - x) / T,
-        vy: (CFG.H + 70 - y) / T,
-        vz: (2.6 - 0.35) / T,
-        rot: Math.random() * 6, vr: (Math.random() - 0.5) * 16,
-        life: T + 0.1, delay: i * 0.05,
-      });
-    }
+  pop(x, y, gold) {
+    this.pops.push({ x, y, gold, life: 0.32, max: 0.32 });
   },
   sparkle(x, y) {
     for (let i = 0; i < 12; i++) {
       const a = Math.random() * Math.PI * 2;
-      this.sparks.push({ x, y, vx: Math.cos(a) * 260, vy: Math.sin(a) * 260, life: 0.5 });
+      this.sparks.push({ x, y, vx: Math.cos(a) * 240, vy: Math.sin(a) * 240, life: 0.45 });
     }
   },
 
@@ -86,26 +76,9 @@ const fx = {
     this.flash = Math.max(0, this.flash - dt * 3);
     for (const t of this.texts) { t.life -= dt; t.y -= dt * 70; }
     this.texts = this.texts.filter((t) => t.life > 0);
-    for (const f of this.flies) { f.t += dt; f.spin += dt * 12; }
-    this.flies = this.flies.filter((f) => f.t < f.dur);
-    for (const p of this.peels) {
-      if (p.delay > 0) { p.delay -= dt; continue; }
-      p.life -= dt;
-      p.vy += 260 * dt;                                  // แรงโน้มถ่วงเบาๆ ให้โค้งนิดหน่อย
-      p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt; p.rot += p.vr * dt;
-      if (p.y > CFG.H * 0.72 && !p.done) {               // ถึงหน้ากล้อง = แปะจอ
-        p.done = true;
-        this.splats.push({
-          x: Math.max(60, Math.min(CFG.W - 60, p.x)),
-          y: Math.max(100, Math.min(CFG.H - 60, p.y + (Math.random() - 0.5) * 120)),
-          rot: p.rot, life: 0.9, max: 0.9, scale: 0.55 + Math.random() * 0.4,
-        });
-      }
-    }
-    this.peels = this.peels.filter((p) => p.life > 0 && !p.done);
-    for (const s of this.splats) s.life -= dt;
-    this.splats = this.splats.filter((s) => s.life > 0);
-    for (const s of this.sparks) { s.life -= dt; s.x += s.vx * dt; s.y += s.vy * dt; s.vy += 700 * dt; }
+    for (const p of this.pops) p.life -= dt;
+    this.pops = this.pops.filter((p) => p.life > 0);
+    for (const s of this.sparks) { s.life -= dt; s.x += s.vx * dt; s.y += s.vy * dt; s.vx *= 0.93; s.vy *= 0.93; }
     this.sparks = this.sparks.filter((s) => s.life > 0);
   },
 };
@@ -116,14 +89,17 @@ function px(ctx, key, x, y, size) {
   ctx.drawImage(im, Math.round(x), Math.round(y), size, size * (im.height / im.width));
 }
 
-/** วาด 1 เฟรมจาก sprite sheet (crop ตาม FRAMES[key]) */
-function pxFrame(ctx, key, frameIndex, x, y, size) {
-  const im = img[key];
+/** วาด 1 เฟรมจาก sheet · flip = พลิกซ้ายขวา (ใช้กับท่าเดินด้านข้าง) */
+function pxFrame(ctx, key, index, cx, cy, scale, flip = false) {
   const f = FRAMES[key];
-  const col = frameIndex % f.cols;
-  const row = Math.floor(frameIndex / f.cols);
-  const destH = size * (f.h / f.w);
-  ctx.drawImage(im, col * f.w, row * f.h, f.w, f.h, Math.round(x), Math.round(y), size, destH);
+  const col = index % f.cols;
+  const w = f.w * scale;
+  const h = f.h * scale;
+  ctx.save();
+  ctx.translate(Math.round(cx), Math.round(cy));
+  if (flip) ctx.scale(-1, 1);
+  ctx.drawImage(img[key], col * f.w, 0, f.w, f.h, Math.round(-w / 2), Math.round(-h), w, h);
+  ctx.restore();
 }
 
 function label(ctx, text, x, y, { size = 26, color = '#fff1e0', align = 'left', weight = 700 } = {}) {
@@ -147,59 +123,38 @@ function panel(ctx, x, y, w, h, fill = 'rgba(28,20,14,0.72)') {
   ctx.stroke();
 }
 
+function ring(ctx, x, y, r, color) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.stroke();
+}
+
 // ---------- ฉากหลัก ----------
 function draw(ctx, game) {
-  const { monkey, player, round, powerups, time } = game;
+  const { player, round, arena, time } = game;
   ctx.imageSmoothingEnabled = false;
   ctx.save();
-
   if (fx.shake > 0.2) {
     ctx.translate((Math.random() - 0.5) * fx.shake, (Math.random() - 0.5) * fx.shake);
   }
 
-  ctx.drawImage(img.bg, 0, 0, CFG.W, CFG.H);
+  drawGround(ctx);
 
-  // เงาใต้ลิง
-  ctx.fillStyle = 'rgba(20,14,10,0.28)';
-  ctx.beginPath();
-  ctx.ellipse(CX, GROUND_Y + 8, 145, 24, 0, 0, Math.PI * 2);
-  ctx.fill();
+  // เรียงตาม y ให้ของที่อยู่ล่างทับของที่อยู่บน = ได้ความลึกแบบ top-down
+  const actors = [];
+  for (const d of DECOR) actors.push({ y: d.y, draw: () => px(ctx, d.kind, d.x - 24, d.y - 24, 48) });
+  for (const b of arena.bananas) actors.push({ y: b.y, draw: () => drawBanana(ctx, b, time) });
+  for (const e of arena.enemies) actors.push({ y: e.y, draw: () => drawEnemy(ctx, e) });
+  actors.push({ y: player.y, draw: () => drawHero(ctx, player, time) });
+  actors.sort((a, b) => a.y - b.y);
+  for (const a of actors) a.draw();
 
-  // ลิง (หายใจขึ้นลงตอนหลับ)
-  const breathe = monkey.state === STATE.SLEEPING ? Math.sin(time * 2.2) * 5 : 0;
-  const jolt = monkey.state === STATE.AWAKE ? -8 : 0;
-  const key = 'monkey_' + monkey.state.toLowerCase().replace('sleeping', 'sleep')
-    .replace('warning', 'warn').replace('awake', 'awake').replace('caught', 'caught');
-  px(ctx, key, MONKEY.x, MONKEY.y + breathe + jolt, MONKEY.size);
-
-  drawStealZone(ctx, monkey, time);
-  drawPile(ctx, round, time);
-  drawMood(ctx, monkey, time);
-
-  // power-ups
-  for (const it of powerups.items) {
-    const bob = Math.sin(it.t * 6) * 8;
-    const fade = it.life < 0.5 ? 0.35 + 0.65 * Math.abs(Math.sin(it.t * 20)) : 1;
-    ctx.globalAlpha = fade;
-    if (it.kind === 'gold') {
-      ctx.save();
-      ctx.translate(it.x, it.y + bob);
-      ctx.rotate(Math.sin(it.t * 4) * 0.25);
-      ctx.shadowColor = '#ffe680';
-      ctx.shadowBlur = 24;
-      ctx.drawImage(img.banana_gold, -32, -32, 64, 64);
-      ctx.restore();
-    } else {
-      px(ctx, 'radio', it.x - 30, it.y - 30 + bob, 60);
-    }
-    ctx.globalAlpha = 1;
-  }
-
-  drawHero(ctx, player, monkey, time);
-  drawThrows(ctx, game.throws);
+  for (const r of arena.rocks) drawRock(ctx, r);
 
   drawFx(ctx);
-  if (game.running) drawHud(ctx, game);   // เมนู/หน้าจบไม่ต้องมี HUD จะได้ไม่รกหลังป้าย
+  if (game.running) drawHud(ctx, game);
 
   ctx.restore();
 
@@ -209,176 +164,103 @@ function draw(ctx, game) {
   }
 }
 
-// เขตกองกล้วย — ยืนในนี้ตอนลิงหลับ = เก็บเอง
-function drawStealZone(ctx, monkey, time) {
-  const safe = monkey.state === STATE.SLEEPING || monkey.state === STATE.WARNING;
-  const pulse = 0.5 + 0.5 * Math.sin(time * (safe ? 2.4 : 7));
-  ctx.save();
-  ctx.lineWidth = 5;
-  ctx.setLineDash([16, 12]);
-  ctx.lineDashOffset = -time * (safe ? 40 : 140);
-  ctx.strokeStyle = safe
-    ? `rgba(255,217,74,${0.35 + pulse * 0.4})`
-    : `rgba(255,75,62,${0.45 + pulse * 0.45})`;
-  ctx.beginPath();
-  ctx.ellipse(STEAL.x, STEAL.y, CFG.STEAL_R, CFG.STEAL_R * 0.42, 0, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.restore();
+function drawGround(ctx) {
+  const t = 32 * 2;                       // กระเบื้อง 32px วาดที่ 64px
+  for (let y = 0; y < CFG.H; y += t) {
+    for (let x = 0; x < CFG.W; x += t) ctx.drawImage(img.ground_tile, x, y, t, t);
+  }
+  // ขอบสนาม = แถบมืดรอบจอ บอกว่าเดินออกไม่ได้
+  const a = CFG.ARENA;
+  ctx.fillStyle = 'rgba(18,26,14,0.5)';
+  ctx.fillRect(0, 0, CFG.W, a.top - 14);
+  ctx.fillRect(0, a.bottom + 14, CFG.W, CFG.H - a.bottom);
+  ctx.fillRect(0, 0, a.left - 14, CFG.H);
+  ctx.fillRect(a.right + 14, 0, CFG.W - a.right, CFG.H);
 }
 
-function drawHero(ctx, hero, monkey, time) {
-  const size = CFG.HERO_SIZE;
-  // เงาใต้เท้า
-  ctx.fillStyle = 'rgba(20,14,10,0.32)';
+function shadow(ctx, x, y, rx) {
+  ctx.fillStyle = 'rgba(18,26,14,0.3)';
   ctx.beginPath();
-  ctx.ellipse(hero.x, hero.y, size * 0.28, size * 0.1, 0, 0, Math.PI * 2);
+  ctx.ellipse(x, y, rx, rx * 0.4, 0, 0, Math.PI * 2);
   ctx.fill();
+}
 
-  const bob = hero.moving ? Math.abs(Math.sin(hero.walk / 26)) * 7 : Math.sin(time * 3) * 2;
+function drawHero(ctx, hero, time) {
+  shadow(ctx, hero.x, hero.y, 18);
+  const step = hero.moving ? Math.floor(hero.anim) % 2 : 0;
+  const index = DIR_ROW[hero.dir] + step;
   ctx.save();
-  if (hero.iframe > 0) ctx.globalAlpha = 0.35 + 0.65 * Math.abs(Math.sin(time * 30));
-  ctx.translate(hero.x, hero.y - bob);
-  ctx.scale(hero.face, 1);
-  ctx.drawImage(img.hero, Math.round(-size / 2), Math.round(-size), size, size);
+  if (hero.iframe > 0) ctx.globalAlpha = 0.35 + 0.65 * Math.abs(Math.sin(time * 26));
+  pxFrame(ctx, 'hero_walk', index, hero.x, hero.y + 6, CFG.HERO_SCALE, hero.dir === 'side' && hero.face < 0);
   ctx.restore();
-
-  if (SHOW_HITBOX) {
-    ctx.strokeStyle = '#4dff9f';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(hero.x, hero.hitY, CFG.HERO_R, 0, Math.PI * 2);
-    ctx.stroke();
-  }
+  if (SHOW_HITBOX) ring(ctx, hero.x, hero.hitY, CFG.HERO_R, '#4dff9f');
 }
 
-function drawThrows(ctx, throws) {
-  if (!throws) return;
-  for (const p of throws.items) {
-    ctx.save();
-    ctx.translate(p.x, p.y);
-    ctx.rotate(p.rot);
-    ctx.drawImage(img.banana_peel, -26, -26, 52, 52);
-    ctx.restore();
-    if (SHOW_HITBOX) {
-      ctx.strokeStyle = '#ff4b3e';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, CFG.THROW_R, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-  }
+function drawEnemy(ctx, e) {
+  shadow(ctx, e.x, e.y + 14, 14);
+  const index = DIR_ROW[e.dir] + (Math.floor(e.anim) % 2);
+  pxFrame(ctx, 'enemy_walk', index, e.x, e.y + 20, CFG.ENEMY_SCALE, e.dir === 'side' && e.face < 0);
+  if (SHOW_HITBOX) ring(ctx, e.x, e.y, CFG.ENEMY_R, '#ff4b3e');
 }
 
-function drawPile(ctx, round, time) {
-  // กองกล้วยหน้าลิง — ยิ่งขโมยไปเยอะ กองยิ่งบาง
-  const left = Math.max(5, 14 - Math.floor(round.stolenTotal / 6));
-  for (let i = 0; i < left; i++) {
-    const t = left === 1 ? 0.5 : i / (left - 1);
-    const x = CX + (t - 0.5) * 340;                       // เรียงหน้าลิงเป็นแถวโค้ง
-    const y = PILE_Y - Math.sin(t * Math.PI) * 18 + (i % 3) * 9;
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate((i % 2 ? 1 : -1) * (0.5 + t) + Math.sin(time + i) * 0.05);
-    ctx.drawImage(img.banana, -24, -24, 48, 48);
-    ctx.restore();
+function drawBanana(ctx, b, time) {
+  const bob = Math.sin(b.t * 4) * 4;
+  const fade = b.life < 2.5 ? 0.35 + 0.65 * Math.abs(Math.sin(b.life * 12)) : 1;
+  ctx.save();
+  ctx.globalAlpha = fade;
+  shadow(ctx, b.x, b.y + 12, 12);
+  if (b.gold) {
+    ctx.shadowColor = '#ffe680';
+    ctx.shadowBlur = 18;
   }
+  const im = b.gold ? img.banana_gold : img.banana;
+  ctx.drawImage(im, Math.round(b.x - 20), Math.round(b.y - 20 + bob), 40, 40);
+  ctx.restore();
+  if (SHOW_HITBOX) ring(ctx, b.x, b.y, CFG.BANANA_R, '#ffd94a');
 }
 
-function drawMood(ctx, monkey, time) {
-  const cx = CX;
-  if (monkey.state === STATE.SLEEPING) {
-    for (let i = 0; i < 3; i++) {
-      const t = (time * 0.6 + i * 0.33) % 1;
-      ctx.globalAlpha = 1 - t;
-      label(ctx, 'z', cx + 96 + t * 46, MONKEY.y + 40 - t * 70,
-        { size: 24 + i * 12 + t * 16, color: '#eaf4ff', align: 'center' });
-      ctx.globalAlpha = 1;
-    }
-  } else if (monkey.state === STATE.WARNING) {
-    const pulse = 1 + Math.sin(time * 30) * 0.12;
-    ctx.save();
-    ctx.translate(cx, MONKEY.y + 52);
-    ctx.scale(pulse, pulse);
-    label(ctx, '!', 0, 0, { size: 92, color: '#ff4b3e', align: 'center' });
-    ctx.restore();
-  } else if (monkey.state === STATE.AWAKE) {
-    label(ctx, 'ตื่นแล้ว!', cx, MONKEY.y + 44, { size: 44, color: '#ffd94a', align: 'center' });
-  } else if (monkey.state === STATE.CAUGHT) {
-    label(ctx, 'โดนจับ!', cx, MONKEY.y + 44, { size: 52, color: '#ff4b3e', align: 'center' });
-  }
+function drawRock(ctx, r) {
+  ctx.save();
+  ctx.translate(r.x, r.y);
+  ctx.rotate(r.rot);
+  ctx.drawImage(img.rock, -14, -14, 28, 28);
+  ctx.restore();
+  if (SHOW_HITBOX) ring(ctx, r.x, r.y, CFG.ROCK_R, '#ff4b3e');
 }
 
 function drawFx(ctx) {
-  for (const f of fx.flies) {
-    const t = f.t / f.dur;
-    const tx = 60, ty = 44;              // บินเข้าตัวเลขคะแนนมุมซ้ายบน (ไม่มีตะกร้าแล้ว)
-    const x = f.x0 + (tx - f.x0) * t;
-    const y = f.y0 + (ty - f.y0) * t - Math.sin(t * Math.PI) * 160;
+  for (const p of fx.pops) {
+    const t = 1 - p.life / p.max;
+    const sz = 40 + t * 34;
     ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(f.spin);
-    const im = f.gold ? img.banana_gold : img.banana;
-    ctx.drawImage(im, -22, -22, 44, 44);
+    ctx.globalAlpha = 1 - t;
+    ctx.drawImage(p.gold ? img.banana_gold : img.banana, p.x - sz / 2, p.y - sz / 2 - t * 26, sz, sz);
     ctx.restore();
-  }
-  for (const p of fx.peels) {
-    if (p.delay > 0) continue;
-    const sz = 44 * p.z;
-    ctx.save();
-    ctx.translate(p.x, p.y);
-    ctx.rotate(p.rot);
-    ctx.drawImage(img.banana_peel, -sz / 2, -sz / 2, sz, sz);
-    ctx.restore();
-  }
-  for (const s of fx.splats) {
-    const t = s.life / s.max;
-    const sz = 96 * s.scale * (1 + (1 - t) * 0.06);
-    ctx.save();
-    ctx.translate(s.x, s.y);
-    ctx.rotate(s.rot);
-    ctx.globalAlpha = (t > 0.35 ? 1 : t / 0.35) * 0.92;            // ค้างบนจอแล้วค่อยจาง
-    ctx.drawImage(img.banana_peel, -sz / 2, -sz / 2, sz, sz);
-    ctx.restore();
-    ctx.globalAlpha = 1;
   }
   for (const s of fx.sparks) {
-    ctx.fillStyle = '#fff3a0';
+    ctx.fillStyle = '#ffe680';
+    ctx.globalAlpha = Math.max(0, s.life * 2);
     ctx.fillRect(s.x - 3, s.y - 3, 6, 6);
+    ctx.globalAlpha = 1;
   }
   for (const t of fx.texts) {
-    ctx.globalAlpha = Math.min(1, t.life / t.max * 1.6);
+    const a = Math.min(1, t.life / (t.max * 0.5));
+    ctx.globalAlpha = a;
     label(ctx, t.msg, t.x, t.y, { size: t.size, color: t.color, align: 'center' });
     ctx.globalAlpha = 1;
   }
 }
 
-function drawHud(ctx, { round, monkey }) {
-  // คะแนน
-  panel(ctx, 16, 14, 250, 58);
+function drawHud(ctx, { round, arena }) {
+  panel(ctx, 16, 14, 236, 58);
   ctx.drawImage(img.banana, 26, 22, 42, 42);
   label(ctx, `${round.bananas}`, 78, 44, { size: 34, color: '#ffd94a' });
-  if (round.mult > 1) {
-    label(ctx, `x${round.mult}`, 196, 44, { size: 30, color: '#fff3a0' });
-  }
 
-  // เวลา
-  const t = Math.ceil(round.time);
-  panel(ctx, CFG.W / 2 - 92, 14, 184, 58, t <= 10 ? 'rgba(120,26,20,0.8)' : 'rgba(28,20,14,0.72)');
-  label(ctx, `${t}`, CFG.W / 2, 44,
-    { size: t <= 10 ? 40 : 34, color: t <= 10 ? '#ff8b7a' : '#fff1e0', align: 'center' });
+  const left = Math.ceil(round.time);
+  panel(ctx, CFG.W / 2 - 78, 14, 156, 58);
+  label(ctx, left <= 5 ? `${left}` : `0:${String(left).padStart(2, '0')}`, CFG.W / 2, 44,
+    { size: 36, color: left <= 5 ? '#ff8b7a' : '#fff1e0', align: 'center' });
 
-  // Monkey Meter
-  panel(ctx, CFG.W - 266, 14, 250, 58);
-  label(ctx, 'ความโกรธ', CFG.W - 250, 44, { size: 20 });
-  for (let i = 0; i < 5; i++) {
-    const on = i < monkey.anger;
-    ctx.fillStyle = on ? ['#f2c14e', '#f09b3c', '#e2702f', '#d64a32', '#b32222'][i] : 'rgba(255,241,224,0.18)';
-    ctx.strokeStyle = '#2b1b13';
-    ctx.lineWidth = 3;
-    const x = CFG.W - 138 + i * 24;
-    ctx.beginPath();
-    ctx.roundRect(x, 30, 18, 28, 4);
-    ctx.fill();
-    ctx.stroke();
-  }
+  panel(ctx, CFG.W - 236, 14, 220, 58);
+  label(ctx, `ลิงไล่ ${arena.enemies.length}`, CFG.W - 216, 44, { size: 24 });
 }

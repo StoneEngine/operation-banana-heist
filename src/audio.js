@@ -31,7 +31,7 @@ function ac() {
     master.gain.value = 0.9;
     master.connect(audioCtx.destination);
     const mk = (v) => { const g = audioCtx.createGain(); g.gain.value = v; g.connect(master); return g; };
-    bus = { master, music: mk(0.26), sfx: mk(0.6), voice: mk(0.85) };
+    bus = { master, music: mk(0.26), sfx: mk(0.6), voice: mk(0.38) };   // เสียงลิงดังไป เบาลงเหลือ 0.38
   }
   if (audioCtx.state === 'suspended') audioCtx.resume();
   return audioCtx;
@@ -293,8 +293,14 @@ const sfx = {
     noiseBurst({ dur: 0.18, gain: 0.1, filter: 'bandpass', freq: 1800, q: 4, delay: 0.05 });
   },
 
-  throwPeel() {                                       // เสียงเหวี่ยงแขนปา = ลมผ่านหู
-    noiseBurst({ dur: 0.22, gain: 0.12, filter: 'bandpass', freq: 900, q: 2, sweepTo: 220 });
+  throwRock() {                                       // ลิงเหวี่ยงก้อนหิน = ลมผ่านหู
+    noiseBurst({ dur: 0.2, gain: 0.09, filter: 'bandpass', freq: 900, q: 2, sweepTo: 220 });
+  },
+  pick() {                                            // เก็บกล้วยธรรมดา
+    const now = performance.now();
+    if (now - lastGrabAt < 45) return;
+    lastGrabAt = now;
+    marimba(659.25 + Math.random() * 120);
   },
 
   warn() {                                            // ลิงละเมอ "อู๊ก?"
