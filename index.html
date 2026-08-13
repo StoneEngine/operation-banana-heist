@@ -27,16 +27,16 @@
     </div>
 
     <ul class="chips">
-      <li><img src="./assets/sprites/hero.png" alt=""><b>จ๋อจิ๋ว</b><span>WASD เดิน</span></li>
+      <li><img src="./assets/sprites/hero.png" alt=""><b>จ๋อจิ๋ว</b><span>WASD/ลูกศร เดิน</span></li>
+      <li><img src="./assets/sprites/star.png" alt=""><b>ดาวกระจาย</b><span>คลิกซ้ายยิง</span></li>
+      <li><img src="./assets/sprites/rock.png" alt=""><b class="warn">คลิกขวา</b><span>สะท้อนหิน (2 วิ)</span></li>
       <li><img src="./assets/sprites/banana.png" alt=""><b>กล้วย</b><span>เดินทับ = เก็บ</span></li>
-      <li><img src="./assets/sprites/banana_gold.png" alt=""><b>กล้วยทอง</b><span>ได้ทีเดียว 5</span></li>
-      <li><img src="./assets/sprites/enemy_icon.png" alt=""><b class="bad">ลิงไล่</b><span>อย่าให้ชน</span></li>
-      <li><img src="./assets/sprites/rock.png" alt=""><b class="warn">ก้อนหิน</b><span>โดน = เสีย 20%</span></li>
+      <li><img src="./assets/sprites/enemy_icon.png" alt=""><b class="bad">ลิงไล่</b><span>ผี/ตัวปาหิน/บอส</span></li>
     </ul>
 
     <p class="meta">สถิติสูงสุด <b id="menu-best">0</b> ลูก · รอบละ 45 วินาที</p>
     <button id="btn-play" class="big">▶ เริ่มขโมย</button>
-    <p class="hint">WASD / ลูกศร / เมาส์ = เดิน · เก็บกล้วยที่ตกตามพื้นให้ได้มากที่สุดใน 45 วินาที</p>
+    <p class="hint">เดินด้วยคีย์บอร์ด · เมาส์ใช้เล็งยิงเท่านั้น · เลือดหมด = ตาย · เก็บครบ 50 บอสคองโผล่</p>
   </div>
 
   <div id="story" class="overlay" hidden>
@@ -88,6 +88,12 @@
     <button id="btn-skip" class="skip">ข้าม ▶</button>
   </div>
 
+  <div id="upgrade" class="overlay" hidden>
+    <h2>อัปเกรด!</h2>
+    <p class="sub">เลือก 1 อย่าง (กด 1 / 2 / 3 ก็ได้)</p>
+    <div id="upgrade-cards" class="cards"></div>
+  </div>
+
   <div id="gameover" class="overlay" hidden>
     <div class="ending-art">
       <img id="ending-prop" alt="">
@@ -106,6 +112,7 @@
 <script src="./src/config.js"></script>
 <script src="./src/state.js"></script>
 <script src="./src/player.js"></script>
+<script src="./src/weapon.js"></script>
 <script src="./src/arena.js"></script>
 <script src="./src/audio.js"></script>
 <script src="./src/render.js"></script>

@@ -15,38 +15,64 @@ const ui = {
   endTitle: document.getElementById('ending-title'),
   endMonkey: document.getElementById('ending-monkey'),
   endProp: document.getElementById('ending-prop'),
+  upgrade: document.getElementById('upgrade'),
+  cards: document.getElementById('upgrade-cards'),
 };
 
 const game = {
   player: new Player(),
   round: new Round(),
   arena: new Arena(),
+  weapon: new Weapon(),
+  cam: { x: 0, y: 0 },
+  nextUpgradeAt: CFG.UPGRADE_EVERY,
+  paused: false,          // true ตอนเลือกอัปเกรด
   time: 0,
   running: false,
 };
 
-// ---------- อินพุต ----------
-function toCanvas(e) {
+// ---------- กล้องตามตัว: ตัวละครอยู่กลางจอ จนกว่าจะชนขอบโลก ----------
+function updateCam(dt) {
+  const p = game.player;
+  const tx = clampNum(p.x - CFG.W / 2, 0, CFG.WORLD.w - CFG.W);
+  const ty = clampNum(p.y - CFG.H / 2, 0, CFG.WORLD.h - CFG.H);
+  const k = Math.min(1, dt * CFG.CAM_LERP);
+  game.cam.x += (tx - game.cam.x) * k;
+  game.cam.y += (ty - game.cam.y) * k;
+}
+
+// ---------- เมาส์: เล็ง/ยิงเท่านั้น ไม่ใช้เดิน ----------
+const aim = { x: CFG.W / 2, y: CFG.H / 2 };   // พิกัดในโลก
+let firing = false;
+
+function toWorld(e) {
   const r = canvas.getBoundingClientRect();
   return {
-    x: (e.clientX - r.left) * (CFG.W / r.width),
-    y: (e.clientY - r.top) * (CFG.H / r.height),
+    x: (e.clientX - r.left) * (CFG.W / r.width) + game.cam.x,
+    y: (e.clientY - r.top) * (CFG.H / r.height) + game.cam.y,
   };
 }
 
 canvas.addEventListener('pointermove', (e) => {
-  if (!game.running) return;
-  const p = toCanvas(e);
-  game.player.aimAt(p.x, p.y);
+  const p = toWorld(e);
+  aim.x = p.x;
+  aim.y = p.y;
 });
 canvas.addEventListener('pointerdown', (e) => {
   e.preventDefault();
   sfx.unlock();
-  const p = toCanvas(e);
-  game.player.aimAt(p.x, p.y);        // แตะบนมือถือ = เดินไปจุดนั้น
+  const p = toWorld(e);
+  aim.x = p.x;
+  aim.y = p.y;
+  if (e.button === 2) {                       // คลิกขวา = สะท้อนอาวุธ (คูลดาวน์ 2 วิ)
+    if (game.running && !game.paused && game.player.parry()) sfx.parryReady();
+    return;
+  }
+  if (e.button === 0) firing = true;          // คลิกซ้ายค้าง = ยิงรัวตามคูลดาวน์อาวุธ
 });
-canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+window.addEventListener('pointerup', (e) => { if (e.button === 0) firing = false; });
 
+// ---------- คีย์บอร์ด: เดินอย่างเดียว ----------
 const MOVE_KEYS = {
   KeyW: [0, -1], ArrowUp: [0, -1],
   KeyS: [0, 1], ArrowDown: [0, 1],
@@ -69,6 +95,13 @@ window.addEventListener('keydown', (e) => {
     pushMove();
     return;
   }
+  // เลือกอัปเกรดด้วยเลข 1-3 ก็ได้
+  if (game.paused && ['Digit1', 'Digit2', 'Digit3'].includes(e.code)) {
+    const i = Number(e.code.slice(-1)) - 1;
+    const btn = ui.cards.children[i];
+    if (btn) btn.click();
+    return;
+  }
   if (e.code !== 'Space' && e.code !== 'Enter') return;
   e.preventDefault();
   sfx.unlock();
@@ -81,6 +114,7 @@ window.addEventListener('keyup', (e) => {
   pushMove();
 });
 window.addEventListener('blur', () => { held.clear(); pushMove(); });
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
 ui.play.addEventListener('click', () => {
   sfx.unlock();
@@ -94,45 +128,81 @@ ui.mute.addEventListener('click', () => {
   if (!m && (game.running || !story.el.hidden)) sfx.music.start();
 });
 
+// ---------- อัปเกรด ----------
+function openUpgrade() {
+  game.paused = true;
+  held.clear();
+  pushMove();
+  ui.cards.innerHTML = '';
+  game.weapon.roll().forEach((up, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'card';
+    btn.innerHTML = `<img src="./assets/sprites/${up.icon}.png" alt="">`
+      + `<b>${i + 1}. ${up.title}</b><span>${up.desc}</span>`;
+    btn.addEventListener('click', () => {
+      game.weapon.apply(up.id, game.player);
+      ui.upgrade.hidden = true;
+      game.paused = false;
+      sfx.gold();
+    });
+    ui.cards.appendChild(btn);
+  });
+  ui.upgrade.hidden = false;
+}
+
 // ---------- วงจรเกม ----------
 function hurt(from) {
   const hero = game.player;
   const lost = Math.floor(game.round.bananas * CFG.CAUGHT_PENALTY);
   game.round.bananas -= lost;
   game.round.caughtCount += 1;
+  const dead = hero.damage();
   hero.knockFrom(from.x, from.y);
   fx.shake = CFG.SHAKE_HIT;
   fx.flash = 1;
   fx.text(hero.x, hero.hitY - 60, lost > 0 ? `${from.kind} -${lost}` : from.kind, '#ff8b7a', 40);
   sfx.caught();
+  if (dead) finish(true);
 }
 
 function start() {
   game.round.reset();
   game.player.reset();
   game.arena.reset();
+  game.weapon.reset();
+  game.player.x = CFG.WORLD.w / 2;
+  game.player.y = CFG.WORLD.h / 2;
+  game.cam.x = clampNum(game.player.x - CFG.W / 2, 0, CFG.WORLD.w - CFG.W);
+  game.cam.y = clampNum(game.player.y - CFG.H / 2, 0, CFG.WORLD.h - CFG.H);
+  game.nextUpgradeAt = CFG.UPGRADE_EVERY;
+  game.paused = false;
   fx.reset();
   game.running = true;
   sfx.music.start();
   ui.menu.hidden = true;
   ui.over.hidden = true;
+  ui.upgrade.hidden = true;
 }
 
-function finish() {
+function finish(dead = false) {
+  if (!game.running) return;
   game.running = false;
+  game.paused = false;
+  ui.upgrade.hidden = true;
   sfx.music.stop();
   const isBest = bestScore.set(game.round.bananas);
   ui.score.textContent = game.round.bananas;
   ui.best.textContent = bestScore.get();
   ui.caught.textContent = game.round.caughtCount;
   ui.newBest.hidden = !isBest;
-  const end = endingFor(game.round.bananas);
-  ui.endTitle.textContent = end.title;
+  // เลือดหมด = จบแบบแพ้เสมอ ไม่ว่าเก็บได้เท่าไหร่
+  const end = dead ? ENDINGS.bronze : endingFor(game.round.bananas);
+  ui.endTitle.textContent = dead ? '💀 โดนจับคาป่า' : end.title;
   ui.endMonkey.src = `./assets/sprites/${end.monkey}.png`;
   ui.endProp.src = `./assets/sprites/${end.prop}.png`;
   ui.endMonkey.className = end.cls;
   sfx.ending(end.sound);
-  story.playEnding(end, () => { ui.over.hidden = false; });   // เล่าฉากจบก่อน แล้วค่อยโชว์คะแนน
+  story.playEnding(end, () => { ui.over.hidden = false; });
 }
 
 let last = performance.now();
@@ -141,20 +211,30 @@ function frame(now) {
   last = now;
   game.time += dt;
 
-  if (game.running) {
+  if (game.running && !game.paused) {
     game.player.update(dt);
-    game.arena.update(dt, game.player, game.round);
+    updateCam(dt);
+    game.arena.update(dt, game.player, game.round, game.cam, game.weapon, firing, aim);
 
     const gain = game.arena.collect(game.player);
-    if (gain > 0) game.round.bananas += gain;
+    if (gain > 0) {
+      game.round.bananas += gain;
+      if (!game.arena.bossOut && game.round.bananas >= CFG.BOSS_AT) {
+        game.arena.spawnBoss(game.player, game.cam);
+      }
+      if (game.round.bananas >= game.nextUpgradeAt) {
+        game.nextUpgradeAt += CFG.UPGRADE_EVERY;
+        openUpgrade();
+      }
+    }
 
     const hit = game.arena.hitTest(game.player);
     if (hit) hurt(hit);
 
     const before = Math.ceil(game.round.time);
     game.round.update(dt);
-    const nowLeft = Math.ceil(game.round.time);
-    if (nowLeft !== before && nowLeft <= 5 && nowLeft >= 0) sfx.tick(nowLeft === 0);
+    const left = Math.ceil(game.round.time);
+    if (left !== before && left <= 5 && left >= 0) sfx.tick(left === 0);
     if (game.round.over) finish();
   }
   fx.update(dt);

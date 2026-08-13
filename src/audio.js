@@ -296,6 +296,28 @@ const sfx = {
   throwRock() {                                       // ลิงเหวี่ยงก้อนหิน = ลมผ่านหู
     noiseBurst({ dur: 0.2, gain: 0.09, filter: 'bandpass', freq: 900, q: 2, sweepTo: 220 });
   },
+  star() {                                            // ขว้างดาวกระจาย
+    noiseBurst({ dur: 0.09, gain: 0.07, filter: 'highpass', freq: 3200, sweepTo: 1200 });
+  },
+  ping() {                                            // ดาวโดนแต่ยังไม่ตาย
+    marimba(1046.5, 0.05);
+  },
+  kill() {                                            // ศัตรูตาย
+    drum(220, 90, 0.16, 0.3);
+    noiseBurst({ dur: 0.16, gain: 0.1, filter: 'highpass', freq: 2600, sweepTo: 900 });
+  },
+  parryReady() {                                      // ตั้งท่าสะท้อน
+    bell(1318.51, 0, 0.35, 0.16);
+  },
+  parry() {                                           // สะท้อนสำเร็จ
+    duck(0.3, 0.35);
+    bell(1975.53, 0, 0.5, 0.22);
+    noiseBurst({ dur: 0.12, gain: 0.12, filter: 'bandpass', freq: 4200, q: 6 });
+  },
+  bossBig() {                                         // บอสขว้างก้อนใหญ่
+    duck(0.2, 0.6);
+    drum(90, 40, 0.5, 0.5);
+  },
   pick() {                                            // เก็บกล้วยธรรมดา
     const now = performance.now();
     if (now - lastGrabAt < 45) return;

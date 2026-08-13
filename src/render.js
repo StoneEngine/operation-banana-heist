@@ -1,15 +1,20 @@
-// วาดสนาม top-down: พื้นหญ้าปูกระเบื้อง, ของตกแต่ง, กล้วย, ลิง, ก้อนหิน, ตัวเอก, เอฟเฟกต์, HUD
+// วาดโลก top-down พร้อมกล้องตามตัว: พื้นแบ่งโซน, ของตกแต่ง, กล้วย, ศัตรู, บอส, ดาว, HUD
 const SPRITES = {
   ground_tile: 'ground_tile.png',
+  ground_dirt: 'ground_dirt.png',
+  ground_sand: 'ground_sand.png',
+  ground_dark: 'ground_dark.png',
   bush: 'bush.png',
   stone: 'stone.png',
   rock: 'rock.png',
+  star: 'star.png',
   banana: 'banana.png',
   banana_gold: 'banana_gold.png',
   banana_peel: 'banana_peel.png',
   hero: 'hero.png',
   hero_walk: 'hero_walk.png',
   enemy_walk: 'enemy_walk.png',
+  ghost_walk: 'ghost_walk.png',
   monkey_sleep: 'monkey_sleep.png',
   monkey_awake: 'monkey_awake.png',
   monkey_caught: 'monkey_caught.png',
@@ -22,6 +27,7 @@ const img = {};
 const FRAMES = {
   hero_walk: { w: 32, h: 32, cols: 6 },
   enemy_walk: { w: 24, h: 24, cols: 6 },
+  ghost_walk: { w: 24, h: 24, cols: 6 },
 };
 const DIR_ROW = { down: 0, side: 2, up: 4 };
 
@@ -38,32 +44,44 @@ function loadSprites() {
   return Promise.all(jobs);
 }
 
-// ---------- ของตกแต่งพื้น (ตำแหน่งคงที่ สุ่มครั้งเดียวตอนโหลด) ----------
+// ---------- โซนพื้น: แบ่งโลกเป็นตาราง แต่ละช่องพื้นคนละแบบ ----------
+const ZONE_TILES = ['ground_tile', 'ground_dirt', 'ground_dark', 'ground_sand'];
+const ZONES = [];
 const DECOR = [];
-(function seedDecor() {
-  let s = 1337;
+(function seedWorld() {
+  let s = 20260813;
   const rnd = () => (s = (s * 1103515245 + 12345) % 2147483648) / 2147483648;
-  for (let i = 0; i < 16; i++) {
+  for (let r = 0; r < CFG.ZONE_ROWS; r++) {
+    ZONES[r] = [];
+    for (let c = 0; c < CFG.ZONE_COLS; c++) {
+      // ช่องกลางเป็นหญ้าเสมอ (จุดเริ่มเกม) ที่เหลือสุ่มโซน
+      const mid = r === (CFG.ZONE_ROWS >> 1) && c === (CFG.ZONE_COLS >> 1);
+      ZONES[r][c] = mid ? 'ground_tile' : ZONE_TILES[Math.floor(rnd() * ZONE_TILES.length)];
+    }
+  }
+  for (let i = 0; i < 90; i++) {
     DECOR.push({
       kind: rnd() < 0.55 ? 'bush' : 'stone',
-      x: 40 + rnd() * (CFG.W - 80),
-      y: 40 + rnd() * (CFG.H - 80),
+      x: 40 + rnd() * (CFG.WORLD.w - 80),
+      y: 40 + rnd() * (CFG.WORLD.h - 80),
     });
   }
 }());
 
+const ZONE_W = () => CFG.WORLD.w / CFG.ZONE_COLS;
+const ZONE_H = () => CFG.WORLD.h / CFG.ZONE_ROWS;
+
 // ---------- เอฟเฟกต์ ----------
 const fx = {
-  texts: [], pops: [], sparks: [], shake: 0, flash: 0,
+  texts: [], pops: [], sparks: [], puffs: [], shake: 0, flash: 0,
 
-  reset() { this.texts = []; this.pops = []; this.sparks = []; this.shake = 0; this.flash = 0; },
+  reset() { this.texts = []; this.pops = []; this.sparks = []; this.puffs = []; this.shake = 0; this.flash = 0; },
 
   text(x, y, msg, color = '#fff1e0', size = 30) {
     this.texts.push({ x, y, msg, color, size, life: 0.9, max: 0.9 });
   },
-  pop(x, y, gold) {
-    this.pops.push({ x, y, gold, life: 0.32, max: 0.32 });
-  },
+  pop(x, y, gold) { this.pops.push({ x, y, gold, life: 0.32, max: 0.32 }); },
+  puff(x, y, ghost) { this.puffs.push({ x, y, ghost, life: 0.4, max: 0.4 }); },
   sparkle(x, y) {
     for (let i = 0; i < 12; i++) {
       const a = Math.random() * Math.PI * 2;
@@ -78,18 +96,14 @@ const fx = {
     this.texts = this.texts.filter((t) => t.life > 0);
     for (const p of this.pops) p.life -= dt;
     this.pops = this.pops.filter((p) => p.life > 0);
+    for (const p of this.puffs) p.life -= dt;
+    this.puffs = this.puffs.filter((p) => p.life > 0);
     for (const s of this.sparks) { s.life -= dt; s.x += s.vx * dt; s.y += s.vy * dt; s.vx *= 0.93; s.vy *= 0.93; }
     this.sparks = this.sparks.filter((s) => s.life > 0);
   },
 };
 
 // ---------- ตัวช่วยวาด ----------
-function px(ctx, key, x, y, size) {
-  const im = img[key];
-  ctx.drawImage(im, Math.round(x), Math.round(y), size, size * (im.height / im.width));
-}
-
-/** วาด 1 เฟรมจาก sheet · flip = พลิกซ้ายขวา (ใช้กับท่าเดินด้านข้าง) */
 function pxFrame(ctx, key, index, cx, cy, scale, flip = false) {
   const f = FRAMES[key];
   const col = index % f.cols;
@@ -131,51 +145,13 @@ function ring(ctx, x, y, r, color) {
   ctx.stroke();
 }
 
-// ---------- ฉากหลัก ----------
-function draw(ctx, game) {
-  const { player, round, arena, time } = game;
-  ctx.imageSmoothingEnabled = false;
-  ctx.save();
-  if (fx.shake > 0.2) {
-    ctx.translate((Math.random() - 0.5) * fx.shake, (Math.random() - 0.5) * fx.shake);
-  }
-
-  drawGround(ctx);
-
-  // เรียงตาม y ให้ของที่อยู่ล่างทับของที่อยู่บน = ได้ความลึกแบบ top-down
-  const actors = [];
-  for (const d of DECOR) actors.push({ y: d.y, draw: () => px(ctx, d.kind, d.x - 24, d.y - 24, 48) });
-  for (const b of arena.bananas) actors.push({ y: b.y, draw: () => drawBanana(ctx, b, time) });
-  for (const e of arena.enemies) actors.push({ y: e.y, draw: () => drawEnemy(ctx, e) });
-  actors.push({ y: player.y, draw: () => drawHero(ctx, player, time) });
-  actors.sort((a, b) => a.y - b.y);
-  for (const a of actors) a.draw();
-
-  for (const r of arena.rocks) drawRock(ctx, r);
-
-  drawFx(ctx);
-  if (game.running) drawHud(ctx, game);
-
-  ctx.restore();
-
-  if (fx.flash > 0) {
-    ctx.fillStyle = `rgba(214,60,50,${Math.min(0.55, fx.flash * 0.5)})`;
-    ctx.fillRect(0, 0, CFG.W, CFG.H);
-  }
-}
-
-function drawGround(ctx) {
-  const t = 32 * 2;                       // กระเบื้อง 32px วาดที่ 64px
-  for (let y = 0; y < CFG.H; y += t) {
-    for (let x = 0; x < CFG.W; x += t) ctx.drawImage(img.ground_tile, x, y, t, t);
-  }
-  // ขอบสนาม = แถบมืดรอบจอ บอกว่าเดินออกไม่ได้
-  const a = CFG.ARENA;
-  ctx.fillStyle = 'rgba(18,26,14,0.5)';
-  ctx.fillRect(0, 0, CFG.W, a.top - 14);
-  ctx.fillRect(0, a.bottom + 14, CFG.W, CFG.H - a.bottom);
-  ctx.fillRect(0, 0, a.left - 14, CFG.H);
-  ctx.fillRect(a.right + 14, 0, CFG.W - a.right, CFG.H);
+/** หลอดเลือดเล็กๆ ลอยเหนือหัว */
+function hpBar(ctx, x, y, w, ratio, color = '#4dff9f') {
+  const h = 6;
+  ctx.fillStyle = 'rgba(20,14,10,0.8)';
+  ctx.fillRect(x - w / 2 - 1, y - 1, w + 2, h + 2);
+  ctx.fillStyle = color;
+  ctx.fillRect(x - w / 2, y, w * Math.max(0, ratio), h);
 }
 
 function shadow(ctx, x, y, rx) {
@@ -185,50 +161,160 @@ function shadow(ctx, x, y, rx) {
   ctx.fill();
 }
 
+// ---------- ฉากหลัก ----------
+function draw(ctx, game) {
+  const { player, arena, cam, time } = game;
+  ctx.imageSmoothingEnabled = false;
+  ctx.save();
+  if (fx.shake > 0.2) {
+    ctx.translate((Math.random() - 0.5) * fx.shake, (Math.random() - 0.5) * fx.shake);
+  }
+  ctx.translate(-Math.round(cam.x), -Math.round(cam.y));
+
+  drawGround(ctx, cam);
+
+  // เรียงตาม y ให้ของที่อยู่ล่างทับของที่อยู่บน = ได้ความลึกแบบ top-down
+  const actors = [];
+  for (const d of DECOR) {
+    if (offCam(d.x, d.y, cam, 60)) continue;
+    actors.push({ y: d.y, draw: () => ctx.drawImage(img[d.kind], Math.round(d.x - 24), Math.round(d.y - 24), 48, 48) });
+  }
+  for (const b of arena.bananas) actors.push({ y: b.y, draw: () => drawBanana(ctx, b) });
+  for (const e of arena.enemies) actors.push({ y: e.y, draw: () => drawEnemy(ctx, e) });
+  actors.push({ y: player.y, draw: () => drawHero(ctx, player, time) });
+  actors.sort((a, b) => a.y - b.y);
+  for (const a of actors) a.draw();
+
+  for (const r of arena.rocks) drawRock(ctx, r);
+  for (const s of arena.stars) drawStar(ctx, s);
+
+  drawFx(ctx);
+  ctx.restore();
+
+  if (game.running) drawHud(ctx, game);
+
+  if (fx.flash > 0) {
+    ctx.fillStyle = `rgba(214,60,50,${Math.min(0.55, fx.flash * 0.5)})`;
+    ctx.fillRect(0, 0, CFG.W, CFG.H);
+  }
+}
+
+function offCam(x, y, cam, m = 40) {
+  return x < cam.x - m || x > cam.x + CFG.W + m || y < cam.y - m || y > cam.y + CFG.H + m;
+}
+
+function drawGround(ctx, cam) {
+  const t = 64;                                  // กระเบื้อง 32px วาดที่ 64px
+  const zw = ZONE_W(), zh = ZONE_H();
+  const x0 = Math.floor(cam.x / t) * t;
+  const y0 = Math.floor(cam.y / t) * t;
+  for (let y = y0; y < cam.y + CFG.H + t; y += t) {
+    for (let x = x0; x < cam.x + CFG.W + t; x += t) {
+      const c = clampNum(Math.floor(x / zw), 0, CFG.ZONE_COLS - 1);
+      const r = clampNum(Math.floor(y / zh), 0, CFG.ZONE_ROWS - 1);
+      ctx.drawImage(img[ZONES[r][c]], x, y, t, t);
+    }
+  }
+  // ขอบโลก = แถบมืด บอกว่าเดินต่อไม่ได้
+  ctx.fillStyle = 'rgba(12,18,10,0.55)';
+  if (cam.x < 30) ctx.fillRect(0, cam.y, 30 - cam.x, CFG.H);
+  if (cam.y < 40) ctx.fillRect(cam.x, 0, CFG.W, 40 - cam.y);
+  const rEdge = CFG.WORLD.w - 30;
+  const bEdge = CFG.WORLD.h - 20;
+  if (cam.x + CFG.W > rEdge) ctx.fillRect(rEdge, cam.y, cam.x + CFG.W - rEdge, CFG.H);
+  if (cam.y + CFG.H > bEdge) ctx.fillRect(cam.x, bEdge, CFG.W, cam.y + CFG.H - bEdge);
+}
+
 function drawHero(ctx, hero, time) {
   shadow(ctx, hero.x, hero.y, 18);
   const step = hero.moving ? Math.floor(hero.anim) % 2 : 0;
-  const index = DIR_ROW[hero.dir] + step;
   ctx.save();
   if (hero.iframe > 0) ctx.globalAlpha = 0.35 + 0.65 * Math.abs(Math.sin(time * 26));
-  pxFrame(ctx, 'hero_walk', index, hero.x, hero.y + 6, CFG.HERO_SCALE, hero.dir === 'side' && hero.face < 0);
+  pxFrame(ctx, 'hero_walk', DIR_ROW[hero.dir] + step, hero.x, hero.y + 6, CFG.HERO_SCALE,
+    hero.dir === 'side' && hero.face < 0);
   ctx.restore();
+
+  if (hero.parrying) {                            // วงสะท้อนตอนคลิกขวา
+    ctx.strokeStyle = 'rgba(160,230,255,0.9)';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.arc(hero.x, hero.hitY, CFG.PARRY.radius * (0.7 + 0.3 * (hero.parryT / CFG.PARRY.window)), 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  hpBar(ctx, hero.x, hero.y + 12, 46, hero.hp / hero.maxHp);
   if (SHOW_HITBOX) ring(ctx, hero.x, hero.hitY, CFG.HERO_R, '#4dff9f');
 }
 
 function drawEnemy(ctx, e) {
+  if (e.boss) {
+    const B = CFG.BOSS;
+    shadow(ctx, e.x, e.y + 12, 46);
+    ctx.save();
+    ctx.translate(Math.round(e.x), Math.round(e.y));
+    if (e.face < 0) ctx.scale(-1, 1);
+    if (e.hurtT > 0) ctx.globalAlpha = 0.6;
+    ctx.drawImage(img.monkey_awake, -B.size / 2, -B.size + 30, B.size, B.size);
+    ctx.restore();
+    hpBar(ctx, e.x, e.y - B.size + 20, 120, e.hp / e.maxHp, '#ff6b5a');
+    if (SHOW_HITBOX) ring(ctx, e.x, e.y, B.r, '#ff4b3e');
+    return;
+  }
+
+  const t = CFG.ENEMY_TYPES[e.kind];
   shadow(ctx, e.x, e.y + 14, 14);
-  const index = DIR_ROW[e.dir] + (Math.floor(e.anim) % 2);
-  pxFrame(ctx, 'enemy_walk', index, e.x, e.y + 20, CFG.ENEMY_SCALE, e.dir === 'side' && e.face < 0);
+  ctx.save();
+  if (e.kind === 'ghost') ctx.globalAlpha = 0.78;
+  if (e.hurtT > 0) ctx.globalAlpha = 0.45;
+  pxFrame(ctx, t.sheet, DIR_ROW[e.dir] + (Math.floor(e.anim) % 2), e.x, e.y + 20, CFG.ENEMY_SCALE,
+    e.dir === 'side' && e.face < 0);
+  ctx.restore();
+  if (e.hp < t.hp) hpBar(ctx, e.x, e.y - 30, 30, e.hp / t.hp, '#ff6b5a');
   if (SHOW_HITBOX) ring(ctx, e.x, e.y, CFG.ENEMY_R, '#ff4b3e');
 }
 
-function drawBanana(ctx, b, time) {
+function drawBanana(ctx, b) {
   const bob = Math.sin(b.t * 4) * 4;
   const fade = b.life < 2.5 ? 0.35 + 0.65 * Math.abs(Math.sin(b.life * 12)) : 1;
   ctx.save();
   ctx.globalAlpha = fade;
   shadow(ctx, b.x, b.y + 12, 12);
-  if (b.gold) {
-    ctx.shadowColor = '#ffe680';
-    ctx.shadowBlur = 18;
-  }
-  const im = b.gold ? img.banana_gold : img.banana;
-  ctx.drawImage(im, Math.round(b.x - 20), Math.round(b.y - 20 + bob), 40, 40);
+  if (b.gold) { ctx.shadowColor = '#ffe680'; ctx.shadowBlur = 18; }
+  ctx.drawImage(b.gold ? img.banana_gold : img.banana, Math.round(b.x - 20), Math.round(b.y - 20 + bob), 40, 40);
   ctx.restore();
   if (SHOW_HITBOX) ring(ctx, b.x, b.y, CFG.BANANA_R, '#ffd94a');
 }
 
 function drawRock(ctx, r) {
+  const sz = r.big ? 68 : 28;
   ctx.save();
   ctx.translate(r.x, r.y);
   ctx.rotate(r.rot);
-  ctx.drawImage(img.rock, -14, -14, 28, 28);
+  ctx.drawImage(img.rock, -sz / 2, -sz / 2, sz, sz);
   ctx.restore();
-  if (SHOW_HITBOX) ring(ctx, r.x, r.y, CFG.ROCK_R, '#ff4b3e');
+  if (SHOW_HITBOX) ring(ctx, r.x, r.y, r.r || CFG.ROCK_R, '#ff4b3e');
+}
+
+function drawStar(ctx, s) {
+  ctx.save();
+  ctx.translate(s.x, s.y);
+  ctx.rotate(s.rot);
+  ctx.drawImage(img.star, -16, -16, 32, 32);
+  ctx.restore();
+  if (SHOW_HITBOX) ring(ctx, s.x, s.y, CFG.STAR_R, '#9fd8ff');
 }
 
 function drawFx(ctx) {
+  for (const p of fx.puffs) {
+    const t = 1 - p.life / p.max;
+    ctx.save();
+    ctx.globalAlpha = 1 - t;
+    ctx.fillStyle = p.ghost ? '#a9c6e8' : '#d9b38a';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 12 + t * 26, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
   for (const p of fx.pops) {
     const t = 1 - p.life / p.max;
     const sz = 40 + t * 34;
@@ -244,14 +330,13 @@ function drawFx(ctx) {
     ctx.globalAlpha = 1;
   }
   for (const t of fx.texts) {
-    const a = Math.min(1, t.life / (t.max * 0.5));
-    ctx.globalAlpha = a;
+    ctx.globalAlpha = Math.min(1, t.life / (t.max * 0.5));
     label(ctx, t.msg, t.x, t.y, { size: t.size, color: t.color, align: 'center' });
     ctx.globalAlpha = 1;
   }
 }
 
-function drawHud(ctx, { round, arena }) {
+function drawHud(ctx, { round, arena, player, weapon }) {
   panel(ctx, 16, 14, 236, 58);
   ctx.drawImage(img.banana, 26, 22, 42, 42);
   label(ctx, `${round.bananas}`, 78, 44, { size: 34, color: '#ffd94a' });
@@ -261,6 +346,14 @@ function drawHud(ctx, { round, arena }) {
   label(ctx, left <= 5 ? `${left}` : `0:${String(left).padStart(2, '0')}`, CFG.W / 2, 44,
     { size: 36, color: left <= 5 ? '#ff8b7a' : '#fff1e0', align: 'center' });
 
-  panel(ctx, CFG.W - 236, 14, 220, 58);
-  label(ctx, `ลิงไล่ ${arena.enemies.length}`, CFG.W - 216, 44, { size: 24 });
+  panel(ctx, CFG.W - 268, 14, 252, 58);
+  label(ctx, `ดาว Lv${weapon.level} · ลิง ${arena.enemies.length}`, CFG.W - 252, 44, { size: 22 });
+
+  // เลือด + คูลดาวน์สะท้อน มุมซ้ายล่าง
+  panel(ctx, 16, CFG.H - 78, 268, 62);
+  label(ctx, 'เลือด', 30, CFG.H - 52, { size: 19 });
+  hpBar(ctx, 180, CFG.H - 58, 170, player.hp / player.maxHp);
+  const cd = player.parryCool;
+  label(ctx, cd > 0 ? `สะท้อน ${cd.toFixed(1)}s` : 'สะท้อน พร้อม (คลิกขวา)', 30, CFG.H - 28,
+    { size: 17, color: cd > 0 ? '#ff8b7a' : '#9fd8ff' });
 }

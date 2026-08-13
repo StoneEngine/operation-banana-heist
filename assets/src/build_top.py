@@ -26,16 +26,17 @@ random.seed(7)          # ให้ผลเหมือนเดิมทุก
 
 
 # ---------- พื้น ----------
-def ground_tile():
-    """หญ้า 32x32 ต่อกันได้ทุกด้าน (ไม่มีขอบ ไม่มี outline)"""
-    c = Canvas(32, 32, fill=GRASS[2])
-    for _ in range(46):                       # จุดหญ้าเข้ม/อ่อนกระจาย
+def ground_tile(pal=None, blades=9):
+    """พื้น 32x32 ต่อกันได้ทุกด้าน (ไม่มีขอบ ไม่มี outline) — เปลี่ยน ramp = เปลี่ยนโซน"""
+    pal = pal or GRASS
+    c = Canvas(32, 32, fill=pal[2])
+    for _ in range(46):                       # จุดเข้ม/อ่อนกระจาย
         x, y = random.randrange(32), random.randrange(32)
-        c.set(x, y, GRASS[1] if random.random() < 0.6 else GRASS[3])
-    for _ in range(9):                        # ใบหญ้าเล็ก 2 พิกเซล
+        c.set(x, y, pal[1] if random.random() < 0.6 else pal[3])
+    for _ in range(blades):                   # ใบหญ้า/เศษหิน 2 พิกเซล
         x, y = random.randrange(32), random.randrange(30)
-        c.set(x, y, GRASS[4])
-        c.set(x, y + 1, GRASS[3])
+        c.set(x, y, pal[4])
+        c.set(x, y + 1, pal[3])
     return c
 
 
@@ -56,6 +57,19 @@ def stone():
     c.ellipse(3, 6, 8, 5, STONE[3])
     c.ellipse(4, 7, 4, 3, STONE[4])
     c.ellipse(2, 12, 12, 3, STONE[1])
+    c.outline(INK)
+    return c
+
+
+def star():
+    """ดาวกระจาย 4 แฉก 12x12 — อาวุธหลักของจ๋อจิ๋ว"""
+    c = Canvas(12, 12)
+    STEEL = ramp("#b9c6d6", steps=5)
+    # 4 แฉก: สลับปลายแฉกกับร่องเว้า
+    c.polygon([(5, 0), (7, 4), (11, 5), (7, 7), (6, 11), (4, 7), (0, 5), (4, 4)], STEEL[3])
+    c.polygon([(5, 0), (6, 4), (4, 4)], STEEL[4])            # แฉกบนรับแสง
+    c.polygon([(0, 5), (4, 4), (4, 6)], STEEL[4])
+    c.set(5, 5, "#3d4756")                                    # รูตรงกลาง
     c.outline(INK)
     return c
 
@@ -169,7 +183,48 @@ def enemy_frame(dir_, step):
     return c
 
 
-items = {"ground_tile": ground_tile(), "bush": bush(), "stone": stone(), "rock": rock()}
+GHOST = ramp("#a9c6e8", steps=5)      # ลิงผี: ขาวอมฟ้า ไม่มีขา ล่างจางหายไป
+
+
+def ghost_frame(dir_, step):
+    """ลิงวิปริตร่างผี 24x24 — ลอย ไม่มีขา ตาโบ๋ ปากอ้า"""
+    c = Canvas(24, 24)
+    float_y = 0 if step else 1
+
+    # ชายผีเป็นริ้วแทนขา
+    for i, x in enumerate((7, 11, 15)):
+        c.rect(x, 17 + float_y, 3, 4 - (i % 2), GHOST[1])
+    c.ellipse(5, 9 + float_y, 14, 10, GHOST[2])          # ตัว
+    if dir_ == "side":
+        c.ellipse(12, 9 + float_y, 6, 6, GHOST[2])       # แขนยื่นไปข้างหน้า
+    else:
+        c.ellipse(2, 9 + float_y, 5, 7, GHOST[2])
+        c.ellipse(17, 9 + float_y, 5, 7, GHOST[2])
+    c.circle(5, 4 + float_y, 2, GHOST[1])                # หู
+    c.circle(18, 4 + float_y, 2, GHOST[1])
+    c.ellipse(6, 1 + float_y, 12, 11, GHOST[3])          # หัว
+    c.outline("#2a3550", diagonal=False)                 # ขอบน้ำเงินเข้ม ไม่ใช่สีเดียวกับตัวอื่น
+
+    # ตาโบ๋ + ปากอ้า (วาดหลัง outline)
+    if dir_ != "up":
+        eyes = ((8, 4), (14, 4)) if dir_ == "down" else ((13, 4),)
+        for ex, ey in eyes:
+            c.ellipse(ex, ey + float_y, 4, 4, "#101828")
+            c.set(ex + 1, ey + 1 + float_y, "#7fe3ff")   # แสงในตา
+        c.ellipse(10, 9 + float_y, 5, 4, "#101828")      # ปากอ้ากรีดร้อง
+    return c
+
+
+SAND = ramp("#c9a86a", steps=5)
+DARK = ramp("#2f5d3a", steps=5)
+
+items = {
+    "ground_tile": ground_tile(),                      # โซนหญ้า (โซนเริ่มต้น)
+    "ground_dirt": ground_tile(DIRT, blades=4),        # โซนดินแห้ง
+    "ground_sand": ground_tile(SAND, blades=3),        # โซนชายหาด
+    "ground_dark": ground_tile(DARK, blades=12),       # โซนป่าลึก (ที่ลิงผีชอบโผล่)
+    "bush": bush(), "stone": stone(), "rock": rock(), "star": star(),
+}
 for name, c in items.items():
     save(c, os.path.join(SPR, f"{name}.png"))
     save(c, os.path.join(PRE, f"{name}.png"), scale=8)
@@ -192,3 +247,10 @@ save(enemy_frames[0], os.path.join(SPR, "enemy_icon.png"))     # ไอคอน
 save(enemy_frames[0], os.path.join(PRE, "enemy_down.png"), scale=8)
 save(enemy_frames[2], os.path.join(PRE, "enemy_side.png"), scale=8)
 print(f"  enemy_walk: {enemy_frames[0].count_colors()} colors, 6 frames")
+
+ghost_frames = [ghost_frame(d, s) for d in ("down", "side", "up") for s in (0, 1)]
+save_sheet(ghost_frames, os.path.join(SPR, "ghost_walk.png"), cols=6, scale=1,
+           manifest=os.path.join(SPR, "ghost_walk.json"), fps=6, name="float")
+save(ghost_frames[0], os.path.join(SPR, "ghost_icon.png"))
+save(ghost_frames[0], os.path.join(PRE, "ghost_down.png"), scale=8)
+print(f"  ghost_walk: {ghost_frames[0].count_colors()} colors, 6 frames")
