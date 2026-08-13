@@ -293,6 +293,10 @@ const sfx = {
     noiseBurst({ dur: 0.18, gain: 0.1, filter: 'bandpass', freq: 1800, q: 4, delay: 0.05 });
   },
 
+  throwPeel() {                                       // เสียงเหวี่ยงแขนปา = ลมผ่านหู
+    noiseBurst({ dur: 0.22, gain: 0.12, filter: 'bandpass', freq: 900, q: 2, sweepTo: 220 });
+  },
+
   warn() {                                            // ลิงละเมอ "อู๊ก?"
     duck(0.25, 0.3);
     monkeyVoice('ook');

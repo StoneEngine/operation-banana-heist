@@ -27,16 +27,17 @@
     </div>
 
     <ul class="chips">
-      <li><img src="./assets/sprites/monkey_sleep.png" alt=""><b>หลับ</b><span>กดขโมยได้</span></li>
-      <li><img src="./assets/sprites/monkey_warn.png" alt=""><b class="warn">ใกล้ตื่น</b><span>รีบหยุด</span></li>
-      <li><img src="./assets/sprites/monkey_awake.png" alt=""><b class="bad">ตื่น</b><span>โดนจับ −20%</span></li>
+      <li><img src="./assets/sprites/hero.png" alt=""><b>จ๋อจิ๋ว</b><span>WASD เดิน</span></li>
+      <li><img src="./assets/sprites/monkey_sleep.png" alt=""><b>หลับ</b><span>ยืนในวงเก็บเอง</span></li>
+      <li><img src="./assets/sprites/monkey_awake.png" alt=""><b class="bad">ตื่น</b><span>หนีออกจากวง</span></li>
+      <li><img src="./assets/sprites/banana_peel.png" alt=""><b class="warn">โดนปา</b><span>เสียกล้วย 20%</span></li>
       <li><img src="./assets/sprites/banana_gold.png" alt=""><b>กล้วยทอง</b><span>คะแนน ×5</span></li>
       <li><img src="./assets/sprites/radio.png" alt=""><b>วิทยุ</b><span>หลับต่อ 5 วิ</span></li>
     </ul>
 
     <p class="meta">สถิติสูงสุด <b id="menu-best">0</b> ลูก · รอบละ 45 วินาที</p>
     <button id="btn-play" class="big">▶ เริ่มขโมย</button>
-    <p class="hint">คลิก / แตะ / เว้นวรรค = ยื่นมือหยิบ</p>
+    <p class="hint">WASD / ลูกศร / เมาส์ = เดิน · ยืนในวงตอนลิงหลับ = เก็บกล้วยเอง</p>
   </div>
 
   <div id="story" class="overlay" hidden>
@@ -107,6 +108,7 @@
 <script src="./src/state.js"></script>
 <script src="./src/player.js"></script>
 <script src="./src/powerups.js"></script>
+<script src="./src/throws.js"></script>
 <script src="./src/audio.js"></script>
 <script src="./src/render.js"></script>
 <script src="./src/story.js"></script>

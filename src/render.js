@@ -10,8 +10,12 @@ const SPRITES = {
   banana_gold: 'banana_gold.png',
   basket: 'basket.png',
   hand: 'hand.png',
+  hero: 'hero.png',
   radio: 'radio.png',
 };
+
+// ?hitbox=1 ท้าย URL = โชว์วงกลม hitbox ทั้งของตัวเอกและของที่ปามา (ไว้จูน/ดีบั๊ก)
+const SHOW_HITBOX = typeof location !== 'undefined' && /[?&]hitbox=1/.test(location.search);
 
 const img = {};
 
@@ -36,6 +40,7 @@ const MONKEY = { x: 320, y: 106, size: 320 };
 const BASKET = { x: 792, y: 300, size: 128 };
 const PILE_Y = GROUND_Y - 8;
 const CX = MONKEY.x + MONKEY.size / 2;   // จุดกึ่งกลางลิง
+const STEAL = { x: CX, y: PILE_Y - 6 };  // ศูนย์กลางเขตกองกล้วย
 
 // ---------- เอฟเฟกต์ ----------
 const fx = {
@@ -167,6 +172,7 @@ function draw(ctx, game) {
     .replace('warning', 'warn').replace('awake', 'awake').replace('caught', 'caught');
   px(ctx, key, MONKEY.x, MONKEY.y + breathe + jolt, MONKEY.size);
 
+  drawStealZone(ctx, monkey, time);
   drawPile(ctx, round, time);
   drawMood(ctx, monkey, time);
 
@@ -189,11 +195,8 @@ function draw(ctx, game) {
     ctx.globalAlpha = 1;
   }
 
-  // ตะกร้า + มือ
-  px(ctx, 'basket', BASKET.x, BASKET.y, BASKET.size);
-  const hy = player.handY - 128;
-  const handFrame = Math.min(FRAMES.hand.count - 1, Math.floor(player.reach * FRAMES.hand.count));
-  pxFrame(ctx, 'hand', handFrame, player.x - 64, hy, 128);
+  drawHero(ctx, player, monkey, time);
+  drawThrows(ctx, game.throws);
 
   drawFx(ctx);
   if (game.running) drawHud(ctx, game);   // เมนู/หน้าจบไม่ต้องมี HUD จะได้ไม่รกหลังป้าย
@@ -203,6 +206,66 @@ function draw(ctx, game) {
   if (fx.flash > 0) {
     ctx.fillStyle = `rgba(214,60,50,${Math.min(0.55, fx.flash * 0.5)})`;
     ctx.fillRect(0, 0, CFG.W, CFG.H);
+  }
+}
+
+// เขตกองกล้วย — ยืนในนี้ตอนลิงหลับ = เก็บเอง
+function drawStealZone(ctx, monkey, time) {
+  const safe = monkey.state === STATE.SLEEPING || monkey.state === STATE.WARNING;
+  const pulse = 0.5 + 0.5 * Math.sin(time * (safe ? 2.4 : 7));
+  ctx.save();
+  ctx.lineWidth = 5;
+  ctx.setLineDash([16, 12]);
+  ctx.lineDashOffset = -time * (safe ? 40 : 140);
+  ctx.strokeStyle = safe
+    ? `rgba(255,217,74,${0.35 + pulse * 0.4})`
+    : `rgba(255,75,62,${0.45 + pulse * 0.45})`;
+  ctx.beginPath();
+  ctx.ellipse(STEAL.x, STEAL.y, CFG.STEAL_R, CFG.STEAL_R * 0.42, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawHero(ctx, hero, monkey, time) {
+  const size = CFG.HERO_SIZE;
+  // เงาใต้เท้า
+  ctx.fillStyle = 'rgba(20,14,10,0.32)';
+  ctx.beginPath();
+  ctx.ellipse(hero.x, hero.y, size * 0.28, size * 0.1, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  const bob = hero.moving ? Math.abs(Math.sin(hero.walk / 26)) * 7 : Math.sin(time * 3) * 2;
+  ctx.save();
+  if (hero.iframe > 0) ctx.globalAlpha = 0.35 + 0.65 * Math.abs(Math.sin(time * 30));
+  ctx.translate(hero.x, hero.y - bob);
+  ctx.scale(hero.face, 1);
+  ctx.drawImage(img.hero, Math.round(-size / 2), Math.round(-size), size, size);
+  ctx.restore();
+
+  if (SHOW_HITBOX) {
+    ctx.strokeStyle = '#4dff9f';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(hero.x, hero.hitY, CFG.HERO_R, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
+function drawThrows(ctx, throws) {
+  if (!throws) return;
+  for (const p of throws.items) {
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+    ctx.drawImage(img.banana_peel, -26, -26, 52, 52);
+    ctx.restore();
+    if (SHOW_HITBOX) {
+      ctx.strokeStyle = '#ff4b3e';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, CFG.THROW_R, 0, Math.PI * 2);
+      ctx.stroke();
+    }
   }
 }
 
@@ -248,7 +311,7 @@ function drawMood(ctx, monkey, time) {
 function drawFx(ctx) {
   for (const f of fx.flies) {
     const t = f.t / f.dur;
-    const tx = BASKET.x + 64, ty = BASKET.y + 40;
+    const tx = 60, ty = 44;              // บินเข้าตัวเลขคะแนนมุมซ้ายบน (ไม่มีตะกร้าแล้ว)
     const x = f.x0 + (tx - f.x0) * t;
     const y = f.y0 + (ty - f.y0) * t - Math.sin(t * Math.PI) * 160;
     ctx.save();

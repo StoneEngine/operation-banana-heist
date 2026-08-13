@@ -22,6 +22,8 @@ const game = {
   player: new Player(),
   round: new Round(),
   powerups: new Powerups(),
+  throws: new Throws(),
+  stealAcc: 0,          // เศษกล้วยที่ยังไม่ครบ 1 ลูก
   time: 0,
   running: false,
 };
@@ -41,65 +43,90 @@ function toCanvas(e) {
   };
 }
 
-function grabAt(x, y) {
-  if (!game.running) return;
-  const hit = game.powerups.hit(x, y);
-  if (hit === 'gold') {
-    game.round.addMult(CFG.GOLD_MULT, CFG.GOLD_MULT_TIME);
-    fx.text(x, y - 30, `กล้วยทอง x${CFG.GOLD_MULT}!`, '#ffd94a', 36);
-    fx.sparkle(x, y);
-    sfx.gold();
-    return;
-  }
-  if (hit === 'radio') {
-    game.monkey.extendSleep(CFG.RADIO_SLEEP_BONUS);
-    fx.text(x, y - 30, `หลับต่ออีก ${CFG.RADIO_SLEEP_BONUS} วิ`, '#9fd8ff', 32);
-    sfx.radio();
-    return;
-  }
+/** ยืนในเขตกองกล้วยตอนลิงหลับ = กล้วยไหลเข้าเรื่อยๆ */
+function stealTick(dt) {
+  const hero = game.player;
+  const inZone = Math.hypot(hero.x - STEAL.x, (hero.hitY - STEAL.y) / 0.42) <= CFG.STEAL_R;
+  if (!inZone) { game.stealAcc = 0; return; }
 
-  game.player.aimAt(x);
-  const res = game.player.tryGrab(game.monkey);
-  if (res === 'steal') {
-    const gain = CFG.BANANA_PER_GRAB * game.round.mult;
-    game.round.bananas += gain;
-    game.round.stolenTotal += 1;
-    game.monkey.setAngerFromScore(game.round.stolenTotal);
-    sfx.music.setAnger(game.monkey.anger);        // ยิ่งโกรธ เพลงยิ่งเร่ง
-    fx.fly(game.player.x, game.player.handY - 90, game.round.mult > 1);
-    fx.text(game.player.x, game.player.handY - 130, `+${gain}`,
-      game.round.mult > 1 ? '#ffd94a' : '#fff1e0', 30 + Math.min(game.player.combo, 10));
-    sfx.grab(game.player.combo);
-  } else if (res === 'caught') {
-    const lost = Math.floor(game.round.bananas * CFG.CAUGHT_PENALTY);
-    game.round.bananas -= lost;
-    game.round.caughtCount += 1;
-    game.monkey.catchPlayer();
-    fx.peelBurst(game.player.x);
-    fx.shake = CFG.SHAKE_CAUGHT;
-    fx.flash = 1;
-    if (lost > 0) fx.text(CFG.W / 2, 300, `-${lost} กล้วย`, '#ff8b7a', 46);
-    sfx.caught();
+  if (game.monkey.canSteal) {
+    game.stealAcc += CFG.STEAL_RATE * game.round.mult * dt;
+    while (game.stealAcc >= 1) {
+      game.stealAcc -= 1;
+      game.round.bananas += 1;
+      game.round.stolenTotal += 1;
+      game.monkey.setAngerFromScore(game.round.stolenTotal);
+      sfx.music.setAnger(game.monkey.anger);      // ยิ่งโกรธ เพลงยิ่งเร่ง
+      fx.fly(hero.x, hero.hitY, game.round.mult > 1);
+      sfx.grab(Math.min(5, Math.floor(game.round.stolenTotal / 8)));
+    }
+  } else if (game.monkey.state === STATE.AWAKE && hero.iframe <= 0) {
+    hurt(STEAL.x, STEAL.y, 'โดนจับ!');           // ยืนแช่ตอนลิงตื่น = โดนจับคาที่
   }
 }
 
+/** เสียกล้วย + เด้งถอย — ใช้ทั้งตอนโดนปาและตอนโดนจับคาเขต */
+function hurt(fromX, fromY, msg) {
+  const hero = game.player;
+  const lost = Math.floor(game.round.bananas * CFG.CAUGHT_PENALTY);
+  game.round.bananas -= lost;
+  game.round.caughtCount += 1;
+  game.stealAcc = 0;
+  game.monkey.catchPlayer();          // ลิงยืนหัวเราะ 1.2 วิ = ผู้เล่นได้ตั้งหลัก
+  hero.knockFrom(fromX, fromY);
+  fx.shake = CFG.SHAKE_CAUGHT;
+  fx.flash = 1;
+  fx.text(hero.x, hero.hitY - 70, lost > 0 ? `${msg} -${lost}` : msg, '#ff8b7a', 42);
+  sfx.caught();
+}
+
 canvas.addEventListener('pointermove', (e) => {
-  if (game.running) game.player.aimAt(toCanvas(e).x);
+  if (!game.running) return;
+  const p = toCanvas(e);
+  game.player.aimAt(p.x, p.y);
 });
 canvas.addEventListener('pointerdown', (e) => {
   e.preventDefault();
   sfx.unlock();
   const p = toCanvas(e);
-  grabAt(p.x, p.y);
+  game.player.aimAt(p.x, p.y);      // แตะบนมือถือ = สั่งให้เดินไปจุดนั้น
 });
+// ---------- WASD / ลูกศร ----------
+const MOVE_KEYS = {
+  KeyW: [0, -1], ArrowUp: [0, -1],
+  KeyS: [0, 1], ArrowDown: [0, 1],
+  KeyA: [-1, 0], ArrowLeft: [-1, 0],
+  KeyD: [1, 0], ArrowRight: [1, 0],
+};
+const held = new Set();
+
+function pushMove() {
+  let x = 0, y = 0;
+  for (const code of held) { x += MOVE_KEYS[code][0]; y += MOVE_KEYS[code][1]; }
+  game.player.setMove(x, y);
+}
+
 window.addEventListener('keydown', (e) => {
-  if (e.code !== 'Space' && e.code !== 'ArrowUp') return;
+  if (MOVE_KEYS[e.code]) {
+    e.preventDefault();
+    sfx.unlock();
+    held.add(e.code);
+    pushMove();
+    return;
+  }
+  if (e.code !== 'Space' && e.code !== 'Enter') return;
   e.preventDefault();
   sfx.unlock();
   if (!story.el.hidden) { story.advance(); return; }
-  if (!game.running) { start(); return; }
-  grabAt(game.player.x, game.player.handY - 120);
+  if (!game.running) start();
 });
+
+window.addEventListener('keyup', (e) => {
+  if (!MOVE_KEYS[e.code]) return;
+  held.delete(e.code);
+  pushMove();
+});
+window.addEventListener('blur', () => { held.clear(); pushMove(); });
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
 // เล่นครั้งแรกจากเมนู = ดูเนื้อเรื่องก่อน (ข้ามได้) · เล่นซ้ำจากหน้าจบ = เข้าเกมเลย
@@ -120,7 +147,9 @@ function start() {
   game.round.reset();
   game.player.reset();
   game.powerups.reset();
+  game.throws.reset();
   game.monkey.reset();
+  game.stealAcc = 0;
   fx.reset();
   game.running = true;
   sfx.music.setAnger(0);
@@ -157,6 +186,22 @@ function frame(now) {
     game.monkey.update(dt);
     game.player.update(dt);
     game.powerups.update(dt, game.monkey.state);
+    game.throws.update(dt, game.monkey, game.player);
+    if (game.throws.hitTest(game.player)) hurt(CX, MONKEY.y + 160, 'โดนปา!');
+    stealTick(dt);
+
+    const got = game.powerups.pickup(game.player);
+    if (got === 'gold') {
+      game.round.addMult(CFG.GOLD_MULT, CFG.GOLD_MULT_TIME);
+      fx.text(game.player.x, game.player.hitY - 60, `กล้วยทอง x${CFG.GOLD_MULT}!`, '#ffd94a', 36);
+      fx.sparkle(game.player.x, game.player.hitY);
+      sfx.gold();
+    } else if (got === 'radio') {
+      game.monkey.extendSleep(CFG.RADIO_SLEEP_BONUS);
+      fx.text(game.player.x, game.player.hitY - 60, `หลับต่ออีก ${CFG.RADIO_SLEEP_BONUS} วิ`, '#9fd8ff', 32);
+      sfx.radio();
+    }
+
     const before = Math.ceil(game.round.time);
     game.round.update(dt);
     const now2 = Math.ceil(game.round.time);

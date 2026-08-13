@@ -12,8 +12,9 @@ class Powerups {
   spawn(kind, life) {
     this.items.push({
       kind,
-      x: 120 + Math.random() * (CFG.W - 260),
-      y: 150 + Math.random() * 200,
+      // ต้องอยู่ในสนามที่เดินถึง ไม่งั้นเก็บไม่ได้
+      x: CFG.FIELD.left + 40 + Math.random() * (CFG.FIELD.right - CFG.FIELD.left - 80),
+      y: CFG.FIELD.top + 20 + Math.random() * (CFG.FIELD.bottom - CFG.FIELD.top - 40),
       life,
       maxLife: life,
       t: Math.random() * 6,
@@ -27,11 +28,11 @@ class Powerups {
     this.items = this.items.filter((it) => it.life > 0);
   }
 
-  // คืน kind ของไอเทมที่โดนคลิก (หรือ null) แล้วเอาออกจากจอ
-  hit(x, y) {
+  // เดินทับ = เก็บ (ไม่มีการคลิกแล้ว) คืน kind ของไอเทมที่เก็บได้ หรือ null
+  pickup(hero) {
     for (let i = this.items.length - 1; i >= 0; i--) {
       const it = this.items[i];
-      if (Math.hypot(x - it.x, y - it.y) <= it.r) {
+      if (Math.hypot(hero.x - it.x, hero.hitY - it.y) <= it.r + CFG.HERO_R) {
         this.items.splice(i, 1);
         return it.kind;
       }
