@@ -13,7 +13,6 @@ const ui = {
   caught: document.getElementById('final-caught'),
   loading: document.getElementById('loading'),
   endTitle: document.getElementById('ending-title'),
-  endBody: document.getElementById('ending-body'),
   endMonkey: document.getElementById('ending-monkey'),
   endProp: document.getElementById('ending-prop'),
 };
@@ -140,12 +139,12 @@ function finish() {
   ui.newBest.hidden = !isBest;
   const end = endingFor(game.round.bananas);
   ui.endTitle.textContent = end.title;
-  ui.endBody.textContent = end.body;
   ui.endMonkey.src = `./assets/sprites/${end.monkey}.png`;
   ui.endProp.src = `./assets/sprites/${end.prop}.png`;
   ui.endMonkey.className = end.cls;
   sfx.ending(end.sound);
-  ui.over.hidden = false;
+  // เล่าฉากจบแบบ typewriter ก่อน (ข้ามได้) แล้วค่อยโชว์การ์ดคะแนน
+  story.playEnding(end, () => { ui.over.hidden = false; });
 }
 
 let last = performance.now();

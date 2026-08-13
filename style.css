@@ -16,6 +16,11 @@ html, body {
   color: var(--cream);
   overflow: hidden;
   touch-action: manipulation;
+  /* มือถือ: กดค้าง/ลากบนจอแล้วข้อความโดนไฮไลต์เป็นแถบฟ้า ดูเหมือนเกมพัง — ปิดให้หมด */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
 }
 
 #stage {
@@ -171,6 +176,48 @@ h2 {
 @keyframes rumble {
   0%, 100% { transform: translateX(-50%) translateY(0); }
   50% { transform: translateX(-50%) translateY(-4px); }
+}
+
+/* ตัวเอก "จ๋อจิ๋ว" — วางชิดซ้าย เว้นกลางจอไว้ให้บอสคอง */
+.hero {
+  position: absolute;
+  left: 26%;
+  bottom: 6%;
+  height: 46%;
+  transform: translateX(-50%);
+  image-rendering: pixelated;
+  filter: drop-shadow(0 8px 8px rgba(0, 0, 0, .55));
+}
+
+.hero.bob { animation: herobob 1.7s ease-in-out infinite alternate; }
+@keyframes herobob {
+  from { transform: translateX(-50%) translateY(0); }
+  to { transform: translateX(-50%) translateY(-6%); }
+}
+
+/* ฉากจบบรอนซ์: วิ่งหนีออกนอกจอซ้าย แล้ววนกลับมา */
+.hero.flee { animation: heroflee 2.6s ease-in-out infinite; }
+@keyframes heroflee {
+  0% { transform: translateX(-50%) translateX(26%) rotate(6deg); }
+  50% { transform: translateX(-50%) translateX(-90%) rotate(-6deg); }
+  100% { transform: translateX(-50%) translateX(26%) rotate(6deg); }
+}
+
+/* ฉากจบทอง: เรืองแสงเป็นราชาแห่งป่า */
+.hero.glowing { animation: heroglow 1.5s ease-in-out infinite alternate; }
+@keyframes heroglow {
+  from { filter: drop-shadow(0 8px 8px rgba(0, 0, 0, .55)); }
+  to { filter: drop-shadow(0 0 20px var(--yellow)) drop-shadow(0 8px 8px rgba(0, 0, 0, .55)); }
+}
+
+/* บอสคองก้มหัวคารวะ (ใช้ sprite ลิงหลับ ตาปิดอยู่แล้ว) */
+.boss.bowing {
+  transform-origin: 50% 100%;
+  animation: bossbow 2.2s ease-in-out infinite alternate;
+}
+@keyframes bossbow {
+  from { transform: translateX(-50%) rotate(8deg); }
+  to { transform: translateX(-50%) rotate(20deg); }
 }
 
 /* hand.png เป็น sheet 4 เฟรม — ครอบให้เห็นเฟรมแรกเฟรมเดียว */

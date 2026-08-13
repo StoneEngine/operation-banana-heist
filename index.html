@@ -28,20 +28,46 @@
 
   <div id="story" class="overlay" hidden>
     <div class="story-art">
-      <div class="scene" data-scene="0">
+      <div class="scene" data-scene="hero">
+        <img class="scene-bg dim" src="./assets/sprites/bg.png" alt="">
+        <img class="hero bob" src="./assets/sprites/hero.png" alt="">
+        <img class="prop p2 float-b" src="./assets/sprites/banana.png" alt="">
+      </div>
+      <div class="scene" data-scene="island">
         <img class="scene-bg zoom" src="./assets/sprites/bg.png" alt="">
         <img class="prop p1 float-a" src="./assets/sprites/banana.png" alt="">
         <img class="prop p2 float-b" src="./assets/sprites/banana_gold.png" alt="">
         <img class="prop p3 float-c" src="./assets/sprites/banana.png" alt="">
       </div>
-      <div class="scene" data-scene="1">
+      <div class="scene" data-scene="boss">
         <img class="scene-bg dim" src="./assets/sprites/bg.png" alt="">
         <img class="boss rumble" src="./assets/sprites/monkey_awake.png" alt="">
       </div>
-      <div class="scene" data-scene="2">
+      <div class="scene" data-scene="sneak">
         <img class="scene-bg dim" src="./assets/sprites/bg.png" alt="">
         <img class="prop p-basket" src="./assets/sprites/basket.png" alt="">
         <div class="handcrop creep"><img src="./assets/sprites/hand.png" alt=""></div>
+      </div>
+
+      <!-- ฉากจบ 3 แบบ (ใช้ overlay เดียวกับ intro) -->
+      <div class="scene" data-scene="end-bronze">
+        <img class="scene-bg dim" src="./assets/sprites/bg.png" alt="">
+        <img class="boss rumble" src="./assets/sprites/monkey_caught.png" alt="">
+        <img class="hero flee" src="./assets/sprites/hero.png" alt="">
+        <img class="prop p1 float-b" src="./assets/sprites/banana_peel.png" alt="">
+      </div>
+      <div class="scene" data-scene="end-silver">
+        <img class="scene-bg" src="./assets/sprites/bg.png" alt="">
+        <img class="hero bob" src="./assets/sprites/hero.png" alt="">
+        <img class="prop p-basket" src="./assets/sprites/basket.png" alt="">
+        <img class="prop p1 float-a" src="./assets/sprites/banana.png" alt="">
+        <img class="prop p3 float-c" src="./assets/sprites/banana.png" alt="">
+      </div>
+      <div class="scene" data-scene="end-gold">
+        <img class="scene-bg" src="./assets/sprites/bg.png" alt="">
+        <img class="boss bowing" src="./assets/sprites/monkey_sleep.png" alt="">
+        <img class="hero glowing" src="./assets/sprites/hero.png" alt="">
+        <img class="prop p2 float-b" src="./assets/sprites/banana_gold.png" alt="">
       </div>
     </div>
     <p id="story-text" class="story-text"></p>
@@ -55,7 +81,6 @@
       <img id="ending-monkey" alt="">
     </div>
     <h2 id="ending-title">หมดเวลา!</h2>
-    <p id="ending-body" class="ending-body"></p>
     <p class="score">ได้กล้วย <b id="final-score">0</b> ลูก</p>
     <p class="small">โดนจับ <b id="final-caught">0</b> ครั้ง · สถิติสูงสุด <b id="best-score">0</b></p>
     <p id="new-best" class="newbest" hidden>สถิติใหม่!</p>
