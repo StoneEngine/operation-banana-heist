@@ -377,23 +377,24 @@ function drawFx(ctx) {
   for (const w of fx.swings) {
     const t = 1 - w.life / w.max;                    // 0 -> 1 ตลอดช่วงฟัน
     const half = w.arc / 2;
+    const r = w.range * (0.55 + t * 0.45);
     ctx.save();
     ctx.translate(w.x, w.y);
     ctx.rotate(w.angle);
-    // แถบพระจันทร์เสี้ยวสีทอง กว้างเต็มมุมสวิงจริง พุ่งออกจากตัวไปสุดระยะ
-    ctx.globalAlpha = (1 - t) * 0.9;
+    // เสี้ยววงกลมเต็มโค้งสีทอง พัดออกจากตัวเต็มมุมสวิงจริง (เกือบครึ่งวงกลม)
+    ctx.globalAlpha = (1 - t) * 0.85;
     ctx.fillStyle = '#ffd94a';
     ctx.beginPath();
-    ctx.arc(0, 0, w.range * (0.35 + t * 0.65), -half, half);
-    ctx.arc(0, 0, w.range * (0.15 + t * 0.4), half, -half, true);
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, r, -half, half);
     ctx.closePath();
     ctx.fill();
     // ขอบสว่างวาบด้านนอกให้เห็นชัดขึ้น
     ctx.globalAlpha = (1 - t) * 0.95;
     ctx.strokeStyle = '#fff1e0';
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 5;
     ctx.beginPath();
-    ctx.arc(0, 0, w.range * (0.35 + t * 0.65), -half, half);
+    ctx.arc(0, 0, r, -half, half);
     ctx.stroke();
     ctx.restore();
   }
