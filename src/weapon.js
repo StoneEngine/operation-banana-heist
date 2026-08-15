@@ -72,9 +72,9 @@ class Weapon {
     else if (id === 'boomerang') this.boomerang = true;
     else if (id === 'orbit') this.orbitCount += 1;
     else if (id === 'melee_dmg') hero.meleeDmg += 1;
-    else if (id === 'melee_range') hero.meleeRange = Math.round(hero.meleeRange * 1.18);
-    else if (id === 'melee_rate') hero.meleeCoolBase = Math.max(0.18, hero.meleeCoolBase - 0.07);
-    else if (id === 'melee_arc') hero.meleeArc = Math.min(Math.PI * 2, hero.meleeArc + 0.35);
+    else if (id === 'melee_range') hero.meleeRange = Math.round(hero.meleeRange * 1.12);
+    else if (id === 'melee_rate') hero.meleeCoolBase = Math.max(0.26, hero.meleeCoolBase - 0.05);
+    else if (id === 'melee_arc') hero.meleeArc = Math.min(Math.PI * 1.3, hero.meleeArc + 0.16);
   }
 
   /** ยิงเมื่อกดคลิกซ้ายค้างไว้ เล็งไปทางเคอร์เซอร์ (aim = พิกัดในโลก) */
