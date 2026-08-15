@@ -31,19 +31,21 @@ class Arena {
     }
   }
 
-  /** ต่อยประชิด (กด Q) — เล็งตามทิศเมาส์เหมือนอาวุธไกล แต่ระยะสั้น เป็นมุมกว้างหน้าตัวละคร */
+  /** ฟันดาบประชิด (คลิกขวา) — เล็งตามทิศเมาส์เหมือนอาวุธไกล แต่ระยะสั้น เป็นมุมกว้างหน้าตัวละคร
+   * ดาเมจ/ระยะ/มุม/คูลดาวน์ อัปเกรดแยกได้จากการ์ดใน weapon.js (เก็บค่าไว้ที่ hero) */
   meleeAttack(hero, aim) {
     const M = CFG.MELEE;
+    const range = hero.meleeRange, arc = hero.meleeArc, dmg = hero.meleeDmg;
     const base = Math.atan2(aim.y - hero.hitY, aim.x - hero.x);
     for (const e of this.enemies) {
       const dx = e.x - hero.x, dy = e.y - hero.hitY;
       const d = Math.hypot(dx, dy);
       const er = e.boss ? CFG.BOSS.r : (CFG.ENEMY_TYPES[e.kind].r || CFG.ENEMY_R);
-      if (d > M.range + er) continue;
+      if (d > range + er) continue;
       let diff = Math.abs(Math.atan2(dy, dx) - base);
       if (diff > Math.PI) diff = Math.PI * 2 - diff;
-      if (diff > M.arc / 2) continue;
-      e.hp -= M.dmg;
+      if (diff > arc / 2) continue;
+      e.hp -= dmg;
       e.hurtT = 0.16;
       const kd = d || 1;
       e.x += (dx / kd) * M.knock * 0.12;
@@ -51,7 +53,11 @@ class Arena {
       if (e.hp <= 0) this.killEnemy(e);
     }
     this.enemies = this.enemies.filter((e) => e.hp > 0);
-    fx.meleeSwing(hero.x, hero.hitY, base, M.range);
+    fx.meleeSwing(hero.x, hero.hitY, base, range, arc);
+    fx.dashTrail(hero.x, hero.y);
+    hero.kx += Math.cos(base) * M.lunge;
+    hero.ky += Math.sin(base) * M.lunge;
+    hero.iframe = Math.max(hero.iframe, M.lungeIframe);
     sfx.melee();
   }
 
@@ -134,7 +140,6 @@ class Arena {
     this.tickSpawns(dt, hero, round, cam);
     this.moveEnemies(dt, hero);
     this.moveRocks(dt);
-    this.tickParry(hero);
     this.moveStars(dt);
     this.moveBananas(dt, hero);
     weapon.update(dt, hero, this, firing, aim, round.elapsed);
@@ -340,32 +345,6 @@ class Arena {
       }
     }
     this.bananas = this.bananas.filter((b) => b.life > 0);
-  }
-
-  /** กำลังตั้งท่าสะท้อน: หินธรรมดารอบตัวกลายเป็นดาวพุ่งกลับ · ก้อนของบอสสะท้อนไม่ได้ */
-  tickParry(hero) {
-    if (!hero.parrying) return;
-    for (let i = this.rocks.length - 1; i >= 0; i--) {
-      const r = this.rocks[i];
-      if (Math.hypot(r.x - hero.x, r.y - hero.hitY) > CFG.PARRY.radius) continue;
-      if (r.boss) {
-        if (!r.warned) {
-          r.warned = true;
-          fx.text(r.x, r.y - 30, 'สะท้อนไม่ได้!', '#ff8b7a', 26);
-        }
-        continue;
-      }
-      const d = Math.hypot(r.vx, r.vy) || 1;
-      this.stars.push({
-        x: r.x, y: r.y,
-        vx: (-r.vx / d) * CFG.STAR_SPEED,
-        vy: (-r.vy / d) * CFG.STAR_SPEED,
-        rot: 0, life: CFG.STAR_LIFE, pierce: 2, hits: new Set(),
-      });
-      this.rocks.splice(i, 1);
-      fx.sparkle(r.x, r.y);
-      sfx.parry();
-    }
   }
 
   // ---------- ชน ----------

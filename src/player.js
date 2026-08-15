@@ -17,13 +17,15 @@ class Player {
     this.anim = 0;
     this.moving = false;
     this.iframe = 0;
-    this.parryT = 0;               // ช่วงที่ท่าสะท้อนกำลังทำงาน
-    this.parryCool = 0;
     this.hp = CFG.HERO_HP;
     this.maxHp = CFG.HERO_HP;
     this.speed = CFG.HERO_SPEED;   // อัปเกรด "เท้าไว" เพิ่มค่านี้
     this.magnet = CFG.MAGNET_R;    // อัปเกรด "แม่เหล็กกล้วย" เพิ่มค่านี้
-    this.meleeCool = 0;            // คูลดาวน์ต่อย (Q)
+    this.meleeCool = 0;            // เวลานับถอยหลังก่อนฟันได้อีกครั้ง
+    this.meleeDmg = CFG.MELEE.dmg;     // อัปเกรด "ดาบคมขึ้น" เพิ่มค่านี้
+    this.meleeRange = CFG.MELEE.range; // อัปเกรด "ดาบยาวขึ้น" เพิ่มค่านี้
+    this.meleeArc = CFG.MELEE.arc;     // อัปเกรด "ฟันกว้างขึ้น" เพิ่มค่านี้
+    this.meleeCoolBase = CFG.MELEE.cool; // อัปเกรด "ฟันถี่ขึ้น" ลดค่านี้
     this.dashCool = 0;             // คูลดาวน์พุ่งตัว (Space)
   }
 
@@ -43,16 +45,6 @@ class Player {
   /** จุดกึ่งกลาง hitbox = กลางลำตัว (เท้าอยู่ที่ y) */
   get hitY() { return this.y - 16; }
 
-  /** คลิกขวา = ตั้งท่าสะท้อน คืน true ถ้าใช้ได้ (ไม่ติดคูลดาวน์) */
-  parry() {
-    if (this.parryCool > 0) return false;
-    this.parryT = CFG.PARRY.window;
-    this.parryCool = CFG.PARRY.cool;
-    return true;
-  }
-
-  get parrying() { return this.parryT > 0; }
-
   /** พุ่งตัวไปทางที่กำลังเดิน (หรือทางที่หันอยู่ถ้ายืนนิ่ง) — คืน false ถ้าติดคูลดาวน์ */
   dash() {
     if (this.dashCool > 0) return false;
@@ -69,8 +61,6 @@ class Player {
 
   update(dt) {
     this.iframe = Math.max(0, this.iframe - dt);
-    this.parryT = Math.max(0, this.parryT - dt);
-    this.parryCool = Math.max(0, this.parryCool - dt);
     this.meleeCool = Math.max(0, this.meleeCool - dt);
     this.dashCool = Math.max(0, this.dashCool - dt);
 

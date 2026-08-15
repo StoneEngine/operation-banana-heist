@@ -68,12 +68,22 @@ canvas.addEventListener('pointerdown', (e) => {
   const p = toWorld(e);
   aim.x = p.x;
   aim.y = p.y;
-  if (e.button === 2) {                       // คลิกขวา = สะท้อนอาวุธ (คูลดาวน์ 2 วิ)
-    if (game.running && !game.paused && game.player.parry()) sfx.parryReady();
+  if (e.button === 2) {                       // คลิกขวา = ต่อยประชิด (ดาบ) เล็งตามเมาส์
+    triggerMelee();
     return;
   }
   if (e.button === 0) firing = true;          // คลิกซ้ายค้าง = ยิงรัวตามคูลดาวน์อาวุธ
 });
+
+function triggerMelee() {
+  if (!game.running || game.paused) return;
+  if (game.player.meleeCool > 0) {
+    fx.text(game.player.x, game.player.hitY - 60, 'ยังไม่พร้อม', '#ff8b7a', 24);
+    return;
+  }
+  game.player.meleeCool = game.player.meleeCoolBase;
+  game.arena.meleeAttack(game.player, aim);
+}
 window.addEventListener('pointerup', (e) => { if (e.button === 0) firing = false; });
 
 // ---------- คีย์บอร์ด: เดินอย่างเดียว ----------
@@ -97,20 +107,6 @@ window.addEventListener('keydown', (e) => {
     sfx.unlock();
     held.add(e.code);
     pushMove();
-    return;
-  }
-  // ต่อยประชิด (Q)
-  if (e.code === 'KeyQ') {
-    e.preventDefault();
-    sfx.unlock();
-    if (game.running && !game.paused) {
-      if (game.player.meleeCool > 0) {
-        fx.text(game.player.x, game.player.hitY - 60, 'ยังไม่พร้อม', '#ff8b7a', 24);
-      } else {
-        game.player.meleeCool = CFG.MELEE.cool;
-        game.arena.meleeAttack(game.player, aim);
-      }
-    }
     return;
   }
   // สกิลเดียว: R = ดาวกระจายรอบทิศ

@@ -10,6 +10,10 @@ const UPGRADES = [
   { id: 'sk_storm', title: 'อัปสกิล R ดาวกระจาย', desc: 'ดาวเยอะขึ้น คูลดาวน์สั้นลง', icon: 'star' },
   { id: 'boomerang', title: 'ดาวบูมเมอแรง', desc: 'ดาวเหวี่ยงวกกลับมาหาตัว โดนศัตรูซ้ำได้', icon: 'star' },
   { id: 'orbit', title: 'วงแหวนป้องกัน', desc: 'มีดาวลอยรอบตัวคอยฟันศัตรูที่เข้าใกล้', icon: 'star' },
+  { id: 'melee_dmg', title: 'ดาบคมขึ้น', desc: 'ฟันประชิดแรงขึ้น +1 ดาเมจ', icon: 'rock' },
+  { id: 'melee_range', title: 'ดาบยาวขึ้น', desc: 'ฟันประชิดระยะไกลขึ้น', icon: 'rock' },
+  { id: 'melee_rate', title: 'ฟันถี่ขึ้น', desc: 'คูลดาวน์ฟันประชิดสั้นลง', icon: 'rock' },
+  { id: 'melee_arc', title: 'ฟันกว้างขึ้น', desc: 'มุมสวิงดาบกว้างขึ้น โดนหลายตัวพร้อมกัน', icon: 'rock' },
 ];
 
 class Weapon {
@@ -67,6 +71,10 @@ class Weapon {
     else if (id === 'speed') hero.speed = Math.round(hero.speed * 1.12);
     else if (id === 'boomerang') this.boomerang = true;
     else if (id === 'orbit') this.orbitCount += 1;
+    else if (id === 'melee_dmg') hero.meleeDmg += 1;
+    else if (id === 'melee_range') hero.meleeRange = Math.round(hero.meleeRange * 1.18);
+    else if (id === 'melee_rate') hero.meleeCoolBase = Math.max(0.18, hero.meleeCoolBase - 0.07);
+    else if (id === 'melee_arc') hero.meleeArc = Math.min(Math.PI * 2, hero.meleeArc + 0.35);
   }
 
   /** ยิงเมื่อกดคลิกซ้ายค้างไว้ เล็งไปทางเคอร์เซอร์ (aim = พิกัดในโลก) */

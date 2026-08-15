@@ -306,16 +306,9 @@ const sfx = {
     drum(220, 90, 0.16, 0.3);
     noiseBurst({ dur: 0.16, gain: 0.1, filter: 'highpass', freq: 2600, sweepTo: 900 });
   },
-  parryReady() {                                      // ตั้งท่าสะท้อน
-    bell(1318.51, 0, 0.35, 0.16);
-  },
-  parry() {                                           // สะท้อนสำเร็จ
-    duck(0.3, 0.35);
-    bell(1975.53, 0, 0.5, 0.22);
-    noiseBurst({ dur: 0.12, gain: 0.12, filter: 'bandpass', freq: 4200, q: 6 });
-  },
-  melee() {                                           // ต่อยประชิด (Q)
-    noiseBurst({ dur: 0.09, gain: 0.14, filter: 'bandpass', freq: 1100, q: 2, sweepTo: 300 });
+  melee() {                                           // ฟันดาบประชิด (คลิกขวา) — วืด+ตุบ ให้รู้สึกหนักขึ้น
+    noiseBurst({ dur: 0.1, gain: 0.16, filter: 'bandpass', freq: 2600, q: 2.4, sweepTo: 700 });
+    drum(160, 60, 0.1, 0.16);
   },
   dash() {                                            // พุ่งตัวหนี (Space)
     noiseBurst({ dur: 0.14, gain: 0.1, filter: 'bandpass', freq: 1600, q: 3, sweepTo: 3200 });

@@ -92,8 +92,8 @@ const fx = {
   puff(x, y, ghost) { this.puffs.push({ x, y, ghost, life: 0.4, max: 0.4 }); },
   blast(x, y, r) { this.blasts.push({ x, y, r, life: 0.35, max: 0.35 }); },
   dashTrail(x, y) { this.trails.push({ x, y, life: 0.3, max: 0.3 }); },
-  /** ต่อยประชิด (Q) — เสี้ยววงกลมสีขาวสว่างวาบตรงทิศที่ต่อยออกไป */
-  meleeSwing(x, y, angle, range) { this.swings.push({ x, y, angle, range, life: 0.16, max: 0.16 }); },
+  /** ฟันดาบประชิด (คลิกขวา) — เสี้ยววงพระจันทร์สีทองพาดตามทิศ */
+  meleeSwing(x, y, angle, range, arc) { this.swings.push({ x, y, angle, range, arc, life: 0.22, max: 0.22 }); },
   sparkle(x, y) {
     for (let i = 0; i < 12; i++) {
       const a = Math.random() * Math.PI * 2;
@@ -271,14 +271,6 @@ function drawHero(ctx, hero, time) {
     hero.dir === 'side' && hero.face < 0);
   ctx.restore();
 
-  if (hero.parrying) {                            // วงสะท้อนตอนคลิกขวา
-    ctx.strokeStyle = 'rgba(160,230,255,0.9)';
-    ctx.lineWidth = 5;
-    ctx.beginPath();
-    ctx.arc(hero.x, hero.hitY, CFG.PARRY.radius * (0.7 + 0.3 * (hero.parryT / CFG.PARRY.window)), 0, Math.PI * 2);
-    ctx.stroke();
-  }
-
   hpBar(ctx, hero.x, hero.y + 12, 46, hero.hp / hero.maxHp);
   if (SHOW_HITBOX) ring(ctx, hero.x, hero.hitY, CFG.HERO_R, '#4dff9f');
 }
@@ -383,17 +375,26 @@ function drawFx(ctx) {
     ctx.restore();
   }
   for (const w of fx.swings) {
-    const t = 1 - w.life / w.max;
+    const t = 1 - w.life / w.max;                    // 0 -> 1 ตลอดช่วงฟัน
+    const half = w.arc / 2;
     ctx.save();
     ctx.translate(w.x, w.y);
     ctx.rotate(w.angle);
-    ctx.globalAlpha = (1 - t) * 0.85;
-    ctx.fillStyle = '#fff1e0';
+    // แถบพระจันทร์เสี้ยวสีทอง กว้างเต็มมุมสวิงจริง พุ่งออกจากตัวไปสุดระยะ
+    ctx.globalAlpha = (1 - t) * 0.9;
+    ctx.fillStyle = '#ffd94a';
     ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.arc(0, 0, w.range * (0.5 + t * 0.5), -0.5, 0.5);
+    ctx.arc(0, 0, w.range * (0.35 + t * 0.65), -half, half);
+    ctx.arc(0, 0, w.range * (0.15 + t * 0.4), half, -half, true);
     ctx.closePath();
     ctx.fill();
+    // ขอบสว่างวาบด้านนอกให้เห็นชัดขึ้น
+    ctx.globalAlpha = (1 - t) * 0.95;
+    ctx.strokeStyle = '#fff1e0';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(0, 0, w.range * (0.35 + t * 0.65), -half, half);
+    ctx.stroke();
     ctx.restore();
   }
   for (const p of fx.puffs) {
@@ -445,10 +446,9 @@ function abilitySlot(ctx, x, y, { key, icon, cool, cd, lv }) {
   }
 }
 
-/** แถบความสามารถล่างกลางจอ: Q ต่อย · Space พุ่ง · R ดาวกระจาย (สกิลเดียว อัปเกรดได้) */
+/** แถบความสามารถล่างกลางจอ: Space พุ่ง · R ดาวกระจาย (สกิลเดียว อัปเกรดได้) — ต่อยประชิดย้ายไปคลิกขวา ไม่มีคูลดาวน์โชว์แยก */
 function drawAbilityBar(ctx, player, skills) {
   const slots = [
-    { key: 'Q', icon: 'rock', cool: CFG.MELEE.cool, cd: player.meleeCool },
     { key: 'SPACE', icon: 'hero', cool: CFG.DASH.cool, cd: player.dashCool },
     { key: 'R', icon: 'star', cool: SKILL_DEFS.storm.cool(skills.lv.storm), cd: skills.cd.storm, lv: skills.lv.storm },
   ];
@@ -460,7 +460,7 @@ function drawAbilityBar(ctx, player, skills) {
 }
 
 // แถบควบคุมเกม — ตัวหนังสือชัดๆ ให้เด็กที่บูธเห็นแล้วเข้าใจทันทีว่าปุ่มไหนทำอะไร
-const CONTROLS_LEGEND = 'WASD/ลูกศร เดิน   ·   คลิกซ้ายค้าง ยิงไกล   ·   Q ต่อยประชิด   ·   SPACE พุ่งหนี   ·   R ดาวกระจาย(สกิล)';
+const CONTROLS_LEGEND = 'WASD/ลูกศร เดิน   ·   คลิกซ้ายค้าง ยิงไกล   ·   คลิกขวา ต่อยประชิด   ·   SPACE พุ่งหนี   ·   R ดาวกระจาย(สกิล)';
 
 function drawHud(ctx, { round, arena, player, weapon, skills }) {
   panel(ctx, 16, 14, 236, 58);
@@ -482,13 +482,10 @@ function drawHud(ctx, { round, arena, player, weapon, skills }) {
   panel(ctx, 16, 80, CFG.W - 32, 28, 'rgba(28,20,14,0.6)');
   label(ctx, CONTROLS_LEGEND, CFG.W / 2, 94, { size: 14, align: 'center', color: '#fff1e0', weight: 600 });
 
-  // เลือด + คูลดาวน์สะท้อน มุมซ้ายล่าง
+  // เลือด มุมซ้ายล่าง
   panel(ctx, 16, CFG.H - 78, 268, 62);
   label(ctx, 'เลือด', 30, CFG.H - 52, { size: 19 });
   hpBar(ctx, 180, CFG.H - 58, 170, player.hp / player.maxHp);
-  const cd = player.parryCool;
-  label(ctx, cd > 0 ? `สะท้อน ${cd.toFixed(1)}s` : 'สะท้อน พร้อม (คลิกขวา)', 30, CFG.H - 28,
-    { size: 17, color: cd > 0 ? '#ff8b7a' : '#9fd8ff' });
 
   drawAbilityBar(ctx, player, skills);
 }
