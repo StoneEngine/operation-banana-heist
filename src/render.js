@@ -9,6 +9,7 @@ const SPRITES = {
   rock: 'rock.png',
   star: 'star.png',
   sword: 'sword.png',
+  heart: 'heart.png',
   banana: 'banana.png',
   banana_gold: 'banana_gold.png',
   banana_peel: 'banana_peel.png',
@@ -486,9 +487,9 @@ function drawHud(ctx, { round, arena, player, weapon, skills }) {
   panel(ctx, 16, 80, CFG.W - 32, 28, 'rgba(28,20,14,0.6)');
   label(ctx, CONTROLS_LEGEND, CFG.W / 2, 94, { size: 14, align: 'center', color: '#fff1e0', weight: 600 });
 
-  // เลือด มุมซ้ายล่าง
+  // เลือด มุมซ้ายล่าง — ไอคอนหัวใจแทนคำว่า "เลือด"
   panel(ctx, 16, CFG.H - 78, 268, 62);
-  label(ctx, 'เลือด', 30, CFG.H - 52, { size: 19 });
+  ctx.drawImage(img.heart, 26, CFG.H - 62, 30, 30);
   hpBar(ctx, 180, CFG.H - 58, 170, player.hp / player.maxHp);
 
   drawAbilityBar(ctx, player, skills);

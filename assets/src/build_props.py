@@ -117,6 +117,19 @@ def sword():
     return c
 
 
+def heart():
+    """หัวใจแดงเล็ก ใช้แทนคำว่า 'เลือด' บน HUD"""
+    c = Canvas(16, 16)
+    RED = ramp("#e5484d", steps=5)
+    c.circle(5, 5, 4, RED[3])
+    c.circle(10, 5, 4, RED[3])
+    c.polygon([(1, 6), (14, 6), (8, 15)], RED[3])
+    for x, y in ((3, 3), (4, 2), (8, 2), (9, 3)):
+        c.set(x, y, RED[4])                # ไฮไลต์บนสองก้อนกลม
+    c.outline(INK)
+    return c
+
+
 def radio():
     c = Canvas(16, 16)
     c.rect(2, 6, 12, 8, "#8a8f98")
@@ -139,6 +152,7 @@ items = {
     "basket": basket(),
     "radio": radio(),
     "sword": sword(),
+    "heart": heart(),
 }
 for name, c in items.items():
     save(c, os.path.join(SPR, f"{name}.png"))
