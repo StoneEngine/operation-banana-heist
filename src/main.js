@@ -157,7 +157,9 @@ window.addEventListener('keyup', (e) => {
   pushMove();
 });
 window.addEventListener('blur', () => { held.clear(); pushMove(); });
-canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+// กันเมนูขวาของเบราว์เซอร์ทั้งหน้า ไม่ใช่แค่บน canvas — ตอนหน้าอัปเกรด/story overlay
+// ลอยทับอยู่ คลิกขวาที่โดน overlay จะไม่ผ่าน listener บน canvas เลย เมนูเบราว์เซอร์เลยโผล่
+window.addEventListener('contextmenu', (e) => e.preventDefault());
 
 ui.play.addEventListener('click', () => {
   sfx.unlock();
