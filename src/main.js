@@ -8,6 +8,8 @@ const ui = {
   again: document.getElementById('btn-again'),
   mute: document.getElementById('btn-mute'),
   score: document.getElementById('final-score'),
+  timeLine: document.getElementById('final-time-line'),
+  time: document.getElementById('final-time'),
   best: document.getElementById('best-score'),
   newBest: document.getElementById('new-best'),
   caught: document.getElementById('final-caught'),
@@ -240,6 +242,11 @@ function finish(dead = false, won = false) {
   ui.best.textContent = bestScore.get();
   ui.caught.textContent = game.round.caughtCount;
   ui.newBest.hidden = !isBest;
+  ui.timeLine.hidden = !won;
+  if (won) {
+    const s = Math.floor(game.round.elapsed);
+    ui.time.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  }
   // เลือดหมด = แพ้เสมอ · ล้มบอสได้ = ฉากจบดีที่สุดเสมอ
   const end = dead ? ENDINGS.bronze : (won ? ENDINGS.gold : endingFor(game.round.bananas));
   ui.endTitle.textContent = dead ? '💀 โดนจับคาป่า' : end.title;
@@ -277,7 +284,9 @@ function frame(now) {
           sfx.heal();
         }
       }
-      if (!game.arena.bossOut && game.round.bananas >= CFG.BOSS_AT) {
+      // ใช้ totalCollected (ไม่ลดตอนโดนจับ) กันเคสโดนตีกล้วยหล่นจน bananas ไม่ถึงเกณฑ์สักที
+      // ทั้งที่ความยากขึ้นไปเรื่อยๆ ตามเวลา — ผู้เล่นจะติดฟาร์มวนไม่จบ เจอบอสไม่ได้สักที
+      if (!game.arena.bossOut && game.round.totalCollected >= CFG.BOSS_AT) {
         game.arena.spawnBoss(game.player, game.cam);
       }
       if (game.round.totalCollected >= game.nextUpgradeAt) {
