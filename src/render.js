@@ -78,11 +78,11 @@ const ZONE_H = () => CFG.WORLD.h / CFG.ZONE_ROWS;
 
 // ---------- เอฟเฟกต์ ----------
 const fx = {
-  texts: [], pops: [], sparks: [], puffs: [], blasts: [], trails: [], shake: 0, flash: 0,
+  texts: [], pops: [], sparks: [], puffs: [], blasts: [], trails: [], swings: [], shake: 0, flash: 0,
 
   reset() {
     this.texts = []; this.pops = []; this.sparks = []; this.puffs = [];
-    this.blasts = []; this.trails = []; this.shake = 0; this.flash = 0;
+    this.blasts = []; this.trails = []; this.swings = []; this.shake = 0; this.flash = 0;
   },
 
   text(x, y, msg, color = '#fff1e0', size = 30) {
@@ -92,10 +92,26 @@ const fx = {
   puff(x, y, ghost) { this.puffs.push({ x, y, ghost, life: 0.4, max: 0.4 }); },
   blast(x, y, r) { this.blasts.push({ x, y, r, life: 0.35, max: 0.35 }); },
   dashTrail(x, y) { this.trails.push({ x, y, life: 0.3, max: 0.3 }); },
+  /** ต่อยประชิด (Q) — เสี้ยววงกลมสีขาวสว่างวาบตรงทิศที่ต่อยออกไป */
+  meleeSwing(x, y, angle, range) { this.swings.push({ x, y, angle, range, life: 0.16, max: 0.16 }); },
   sparkle(x, y) {
     for (let i = 0; i < 12; i++) {
       const a = Math.random() * Math.PI * 2;
       this.sparks.push({ x, y, vx: Math.cos(a) * 240, vy: Math.sin(a) * 240, life: 0.45 });
+    }
+  },
+  /** ล้มบอสคองได้ — ฉลองใหญ่: วงแหวนทองซ้อน 3 ชั้น + สะเก็ดทองกระจายรอบทิศ + กล้วยปลิวว่อน */
+  celebrate(x, y) {
+    for (let i = 0; i < 28; i++) {
+      const a = (i / 28) * Math.PI * 2;
+      this.sparks.push({ x, y, vx: Math.cos(a) * 340, vy: Math.sin(a) * 340, life: 0.9 });
+    }
+    for (let i = 0; i < 3; i++) {
+      const life = 0.7 + i * 0.15;
+      this.blasts.push({ x, y, r: 160 + i * 40, life, max: life });
+    }
+    for (let i = 0; i < 10; i++) {
+      this.pops.push({ x: x + rand(-60, 60), y: y + rand(-50, 10), gold: Math.random() < 0.5, life: 1.0, max: 1.0 });
     }
   },
 
@@ -112,6 +128,8 @@ const fx = {
     this.blasts = this.blasts.filter((b) => b.life > 0);
     for (const t of this.trails) t.life -= dt;
     this.trails = this.trails.filter((t) => t.life > 0);
+    for (const w of this.swings) w.life -= dt;
+    this.swings = this.swings.filter((w) => w.life > 0);
     for (const s of this.sparks) { s.life -= dt; s.x += s.vx * dt; s.y += s.vy * dt; s.vx *= 0.93; s.vy *= 0.93; }
     this.sparks = this.sparks.filter((s) => s.life > 0);
   },
@@ -364,6 +382,20 @@ function drawFx(ctx) {
     ctx.fill();
     ctx.restore();
   }
+  for (const w of fx.swings) {
+    const t = 1 - w.life / w.max;
+    ctx.save();
+    ctx.translate(w.x, w.y);
+    ctx.rotate(w.angle);
+    ctx.globalAlpha = (1 - t) * 0.85;
+    ctx.fillStyle = '#fff1e0';
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, w.range * (0.5 + t * 0.5), -0.5, 0.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
   for (const p of fx.puffs) {
     const t = 1 - p.life / p.max;
     ctx.save();
@@ -395,32 +427,40 @@ function drawFx(ctx) {
   }
 }
 
-function skillSlot(ctx, x, y, id, def, skills) {
-  const lv = skills.lv[id];
-  const cd = skills.cd[id];
+/** ช่องความสามารถ 1 อัน — ใช้ร่วมกันทั้งต่อย(Q)/พุ่ง(Space)/สกิลดาวกระจาย(R)
+ * lv เป็น optional (มีแค่สกิลที่อัปเกรดได้ถึงจะโชว์ Lv) */
+function abilitySlot(ctx, x, y, { key, icon, cool, cd, lv }) {
   const ready = cd <= 0;
   panel(ctx, x, y, 74, 74, ready ? 'rgba(58,44,20,0.85)' : 'rgba(20,14,10,0.85)');
   ctx.save();
   if (!ready) ctx.globalAlpha = 0.4;
-  ctx.drawImage(img[def.icon], x + 15, y + 8, 44, 44);
+  ctx.drawImage(img[icon], x + 15, y + 8, 44, 44);
   ctx.restore();
-  label(ctx, def.key, x + 10, y + 12, { size: 15, color: '#ffd94a' });
-  label(ctx, `Lv${lv}`, x + 64, y + 12, { size: 13, align: 'right' });
+  label(ctx, key, x + 10, y + 12, { size: 15, color: '#ffd94a' });
+  if (lv) label(ctx, `Lv${lv}`, x + 64, y + 12, { size: 13, align: 'right' });
   if (!ready) {
     ctx.fillStyle = 'rgba(0,0,0,0.55)';
-    ctx.fillRect(x, y, 74, 74 * (cd / def.cool(lv)));
+    ctx.fillRect(x, y, 74, 74 * (cd / cool));
     label(ctx, cd.toFixed(1), x + 37, y + 60, { size: 16, align: 'center', color: '#ff8b7a' });
   }
 }
 
-function drawSkillBar(ctx, skills) {
-  const ids = ['bomb', 'dash', 'storm'];
+/** แถบความสามารถล่างกลางจอ: Q ต่อย · Space พุ่ง · R ดาวกระจาย (สกิลเดียว อัปเกรดได้) */
+function drawAbilityBar(ctx, player, skills) {
+  const slots = [
+    { key: 'Q', icon: 'rock', cool: CFG.MELEE.cool, cd: player.meleeCool },
+    { key: 'SPACE', icon: 'hero', cool: CFG.DASH.cool, cd: player.dashCool },
+    { key: 'R', icon: 'star', cool: SKILL_DEFS.storm.cool(skills.lv.storm), cd: skills.cd.storm, lv: skills.lv.storm },
+  ];
   const w = 74, gap = 8;
-  const total = ids.length * w + (ids.length - 1) * gap;
+  const total = slots.length * w + (slots.length - 1) * gap;
   let x = CFG.W / 2 - total / 2;
   const y = CFG.H - 90;
-  for (const id of ids) { skillSlot(ctx, x, y, id, SKILL_DEFS[id], skills); x += w + gap; }
+  for (const s of slots) { abilitySlot(ctx, x, y, s); x += w + gap; }
 }
+
+// แถบควบคุมเกม — ตัวหนังสือชัดๆ ให้เด็กที่บูธเห็นแล้วเข้าใจทันทีว่าปุ่มไหนทำอะไร
+const CONTROLS_LEGEND = 'WASD/ลูกศร เดิน   ·   คลิกซ้ายค้าง ยิงไกล   ·   Q ต่อยประชิด   ·   SPACE พุ่งหนี   ·   R ดาวกระจาย(สกิล)';
 
 function drawHud(ctx, { round, arena, player, weapon, skills }) {
   panel(ctx, 16, 14, 236, 58);
@@ -438,6 +478,10 @@ function drawHud(ctx, { round, arena, player, weapon, skills }) {
   panel(ctx, CFG.W - 268, 14, 252, 58);
   label(ctx, `ดาว Lv${weapon.level} · ลิง ${arena.enemies.length}`, CFG.W - 252, 44, { size: 22 });
 
+  // ป้ายควบคุมบางๆ ใต้ HUD บน — โชว์ตลอดเกม อ่านง่ายสำหรับเด็กเล่นที่บูธ
+  panel(ctx, 16, 80, CFG.W - 32, 28, 'rgba(28,20,14,0.6)');
+  label(ctx, CONTROLS_LEGEND, CFG.W / 2, 94, { size: 14, align: 'center', color: '#fff1e0', weight: 600 });
+
   // เลือด + คูลดาวน์สะท้อน มุมซ้ายล่าง
   panel(ctx, 16, CFG.H - 78, 268, 62);
   label(ctx, 'เลือด', 30, CFG.H - 52, { size: 19 });
@@ -446,5 +490,5 @@ function drawHud(ctx, { round, arena, player, weapon, skills }) {
   label(ctx, cd > 0 ? `สะท้อน ${cd.toFixed(1)}s` : 'สะท้อน พร้อม (คลิกขวา)', 30, CFG.H - 28,
     { size: 17, color: cd > 0 ? '#ff8b7a' : '#9fd8ff' });
 
-  drawSkillBar(ctx, skills);
+  drawAbilityBar(ctx, player, skills);
 }

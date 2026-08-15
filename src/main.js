@@ -31,6 +31,8 @@ const game = {
   paused: false,          // true ตอนเลือกอัปเกรด
   time: 0,
   running: false,
+  bossCelebrating: false, // true ระหว่างหยุดโลกโชว์เอฟเฟกต์ฉลองหลังล้มบอส
+  bossCelebrateT: 0,
 };
 
 // ---------- กล้องตามตัว: ตัวละครอยู่กลางจอ จนกว่าจะชนขอบโลก ----------
@@ -97,14 +99,26 @@ window.addEventListener('keydown', (e) => {
     pushMove();
     return;
   }
-  // สกิล Q / E / R
-  const SKILL_KEYS = { KeyQ: 'bomb', KeyE: 'dash', KeyR: 'storm' };
-  if (SKILL_KEYS[e.code]) {
+  // ต่อยประชิด (Q)
+  if (e.code === 'KeyQ') {
     e.preventDefault();
     sfx.unlock();
     if (game.running && !game.paused) {
-      const id = SKILL_KEYS[e.code];
-      if (!game.skills.cast(id, game.player, game.arena)) {
+      if (game.player.meleeCool > 0) {
+        fx.text(game.player.x, game.player.hitY - 60, 'ยังไม่พร้อม', '#ff8b7a', 24);
+      } else {
+        game.player.meleeCool = CFG.MELEE.cool;
+        game.arena.meleeAttack(game.player, aim);
+      }
+    }
+    return;
+  }
+  // สกิลเดียว: R = ดาวกระจายรอบทิศ
+  if (e.code === 'KeyR') {
+    e.preventDefault();
+    sfx.unlock();
+    if (game.running && !game.paused) {
+      if (!game.skills.cast('storm', game.player, game.arena)) {
         fx.text(game.player.x, game.player.hitY - 60, 'ยังไม่พร้อม', '#ff8b7a', 24);
       }
     }
@@ -117,11 +131,27 @@ window.addEventListener('keydown', (e) => {
     if (btn) btn.click();
     return;
   }
-  if (e.code !== 'Space' && e.code !== 'Enter') return;
-  e.preventDefault();
-  sfx.unlock();
-  if (!story.el.hidden) { story.advance(); return; }
-  if (!game.running) start();
+  if (e.code === 'Enter') {
+    e.preventDefault();
+    sfx.unlock();
+    if (!story.el.hidden) { story.advance(); return; }
+    if (!game.running) start();
+    return;
+  }
+  // Space: เมนู/เนื้อเรื่อง = ไปต่อ/เริ่มเกม, ระหว่างเล่น = พุ่งตัวหนี
+  if (e.code === 'Space') {
+    e.preventDefault();
+    sfx.unlock();
+    if (!story.el.hidden) { story.advance(); return; }
+    if (!game.running) { start(); return; }
+    if (game.paused) return;
+    if (!game.player.dash()) {
+      fx.text(game.player.x, game.player.hitY - 60, 'ยังไม่พร้อม', '#ff8b7a', 24);
+    } else {
+      fx.dashTrail(game.player.x, game.player.y);
+      sfx.dash();
+    }
+  }
 });
 window.addEventListener('keyup', (e) => {
   if (!MOVE_KEYS[e.code]) return;
@@ -193,6 +223,8 @@ function start() {
   game.nextUpgradeAt = CFG.UPGRADE_EVERY;
   game.healAcc = 0;
   game.paused = false;
+  game.bossCelebrating = false;
+  game.bossCelebrateT = 0;
   fx.reset();
   game.running = true;
   sfx.music.start();
@@ -237,6 +269,8 @@ function frame(now) {
     const gain = game.arena.collect(game.player);
     if (gain > 0) {
       game.round.bananas += gain;
+      // นับสะสมแยกต่างหาก ไม่ลดตอนโดนจับ ใช้ปลดล็อกอัปเกรดสกิลทุก CFG.UPGRADE_EVERY ลูก
+      game.round.totalCollected += gain;
       // กินกล้วยครบทุกๆ HEAL_EVERY = ฟื้นเลือด 1 หน่วย
       game.healAcc += gain;
       while (game.healAcc >= CFG.HEAL_EVERY) {
@@ -250,7 +284,7 @@ function frame(now) {
       if (!game.arena.bossOut && game.round.bananas >= CFG.BOSS_AT) {
         game.arena.spawnBoss(game.player, game.cam);
       }
-      if (game.round.bananas >= game.nextUpgradeAt) {
+      if (game.round.totalCollected >= game.nextUpgradeAt) {
         game.nextUpgradeAt += CFG.UPGRADE_EVERY;
         openUpgrade();
       }
@@ -260,7 +294,14 @@ function frame(now) {
     if (hit) hurt(hit);
 
     game.round.update(dt);
-    if (game.arena.bossDead) finish(false, true);   // ล้มบอสได้ = ชนะ จบเกม
+    if (game.arena.bossDead && !game.bossCelebrating) {
+      game.bossCelebrating = true;   // หยุดโลกไว้ ให้เห็นเอฟเฟกต์ฉลองเด่นๆ ก่อนตัดฉากจบ
+      game.paused = true;
+    }
+  }
+  if (game.running && game.bossCelebrating) {
+    game.bossCelebrateT += dt;
+    if (game.bossCelebrateT >= CFG.BOSS_CELEBRATE_TIME) finish(false, true);   // ล้มบอสได้ = ชนะ จบเกม
   }
   fx.update(dt);
   draw(ctx, game);
@@ -271,6 +312,8 @@ loadSprites().then(() => {
   ui.loading.hidden = true;
   ui.menu.hidden = false;
   document.getElementById('menu-best').textContent = bestScore.get();
+  document.getElementById('menu-hint').textContent =
+    `เดินด้วยคีย์บอร์ด · เมาส์เล็งยิง · กินกล้วยฟื้นเลือด · เก็บครบ ${CFG.BOSS_AT} บอสโผล่ ล้มบอส = ชนะ`;
   requestAnimationFrame(frame);
 }).catch((err) => {
   ui.loading.textContent = 'โหลดรูปไม่สำเร็จ: ' + err.message;

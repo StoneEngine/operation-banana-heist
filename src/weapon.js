@@ -7,9 +7,7 @@ const UPGRADES = [
   { id: 'pierce', title: 'ดาวทะลุ +1', desc: 'ดาว 1 ดอกฆ่าได้หลายตัว', icon: 'star' },
   { id: 'magnet', title: 'แม่เหล็กกล้วย', desc: 'ดูดกล้วยจากไกลขึ้น 40%', icon: 'banana_gold' },
   { id: 'speed', title: 'เท้าไว', desc: 'เดินเร็วขึ้น 12%', icon: 'hero' },
-  { id: 'sk_bomb', title: 'อัปสกิล Q ระเบิดกล้วย', desc: 'วงกว้างขึ้น แรงขึ้น คูลดาวน์สั้นลง', icon: 'banana_gold' },
-  { id: 'sk_dash', title: 'อัปสกิล E พุ่งตัว', desc: 'พุ่งไกลขึ้น อมตะนานขึ้น', icon: 'hero' },
-  { id: 'sk_storm', title: 'อัปสกิล R พายุดาว', desc: 'ดาวเยอะขึ้น คูลดาวน์สั้นลง', icon: 'star' },
+  { id: 'sk_storm', title: 'อัปสกิล R ดาวกระจาย', desc: 'ดาวเยอะขึ้น คูลดาวน์สั้นลง', icon: 'star' },
   { id: 'boomerang', title: 'ดาวบูมเมอแรง', desc: 'ดาวเหวี่ยงวกกลับมาหาตัว โดนศัตรูซ้ำได้', icon: 'star' },
   { id: 'orbit', title: 'วงแหวนป้องกัน', desc: 'มีดาวลอยรอบตัวคอยฟันศัตรูที่เข้าใกล้', icon: 'star' },
 ];
@@ -43,12 +41,7 @@ class Weapon {
         e.orbitHitAt = now;
         e.hp -= 1;
         e.hurtT = 0.12;
-        if (e.hp <= 0) {
-          arena.kills += 1;
-          arena.dropBananas(e.x, e.y, e.boss ? CFG.BOSS.drop : CFG.ENEMY_TYPES[e.kind].drop);
-          fx.puff(e.x, e.y, e.kind === 'ghost');
-          if (e.boss) { arena.bossDead = true; fx.text(e.x, e.y - 80, 'ล้มบอสคองได้!', '#ffd94a', 48); }
-        }
+        if (e.hp <= 0) arena.killEnemy(e);
       }
     }
     arena.enemies = arena.enemies.filter((e) => e.hp > 0);

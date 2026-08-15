@@ -23,6 +23,8 @@ class Player {
     this.maxHp = CFG.HERO_HP;
     this.speed = CFG.HERO_SPEED;   // อัปเกรด "เท้าไว" เพิ่มค่านี้
     this.magnet = CFG.MAGNET_R;    // อัปเกรด "แม่เหล็กกล้วย" เพิ่มค่านี้
+    this.meleeCool = 0;            // คูลดาวน์ต่อย (Q)
+    this.dashCool = 0;             // คูลดาวน์พุ่งตัว (Space)
   }
 
   setMove(x, y) {
@@ -51,10 +53,26 @@ class Player {
 
   get parrying() { return this.parryT > 0; }
 
+  /** พุ่งตัวไปทางที่กำลังเดิน (หรือทางที่หันอยู่ถ้ายืนนิ่ง) — คืน false ถ้าติดคูลดาวน์ */
+  dash() {
+    if (this.dashCool > 0) return false;
+    const D = CFG.DASH;
+    const dx = this.mvx || (this.dir === 'side' ? this.face : 0);
+    const dy = this.mvy || (this.dir === 'down' ? 1 : (this.dir === 'up' ? -1 : 0));
+    const d = Math.hypot(dx, dy) || 1;
+    this.kx = (dx / d) * D.power;
+    this.ky = (dy / d) * D.power;
+    this.iframe = Math.max(this.iframe, D.iframe);
+    this.dashCool = D.cool;
+    return true;
+  }
+
   update(dt) {
     this.iframe = Math.max(0, this.iframe - dt);
     this.parryT = Math.max(0, this.parryT - dt);
     this.parryCool = Math.max(0, this.parryCool - dt);
+    this.meleeCool = Math.max(0, this.meleeCool - dt);
+    this.dashCool = Math.max(0, this.dashCool - dt);
 
     this.x += this.kx * dt;
     this.y += this.ky * dt;

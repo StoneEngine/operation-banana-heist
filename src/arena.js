@@ -16,6 +16,45 @@ class Arena {
     this.bossDead = false;
   }
 
+  /** ฆ่าศัตรูตัวหนึ่ง — จุดรวมเดียวที่ทุกอาวุธ (ดาว/วงแหวน/ต่อย) เรียกใช้ กันลอจิกซ้ำกัน 3 ที่
+   * ถ้าเป็นบอส เพิ่มเอฟเฟกต์ฉลองพิเศษ (ดู fx.celebrate ใน render.js) */
+  killEnemy(e) {
+    this.kills += 1;
+    this.dropBananas(e.x, e.y, e.boss ? CFG.BOSS.drop : CFG.ENEMY_TYPES[e.kind].drop);
+    fx.puff(e.x, e.y, e.kind === 'ghost');
+    if (e.boss) {
+      this.bossDead = true;
+      fx.text(e.x, e.y - 80, 'ล้มบอสคองได้!', '#ffd94a', 48);
+      fx.celebrate(e.x, e.y);
+      fx.shake = CFG.SHAKE_BOSS_DEAD;
+      sfx.bossDefeat();
+    }
+  }
+
+  /** ต่อยประชิด (กด Q) — เล็งตามทิศเมาส์เหมือนอาวุธไกล แต่ระยะสั้น เป็นมุมกว้างหน้าตัวละคร */
+  meleeAttack(hero, aim) {
+    const M = CFG.MELEE;
+    const base = Math.atan2(aim.y - hero.hitY, aim.x - hero.x);
+    for (const e of this.enemies) {
+      const dx = e.x - hero.x, dy = e.y - hero.hitY;
+      const d = Math.hypot(dx, dy);
+      const er = e.boss ? CFG.BOSS.r : (CFG.ENEMY_TYPES[e.kind].r || CFG.ENEMY_R);
+      if (d > M.range + er) continue;
+      let diff = Math.abs(Math.atan2(dy, dx) - base);
+      if (diff > Math.PI) diff = Math.PI * 2 - diff;
+      if (diff > M.arc / 2) continue;
+      e.hp -= M.dmg;
+      e.hurtT = 0.16;
+      const kd = d || 1;
+      e.x += (dx / kd) * M.knock * 0.12;
+      e.y += (dy / kd) * M.knock * 0.12;
+      if (e.hp <= 0) this.killEnemy(e);
+    }
+    this.enemies = this.enemies.filter((e) => e.hp > 0);
+    fx.meleeSwing(hero.x, hero.hitY, base, M.range);
+    sfx.melee();
+  }
+
   /** บอสคองโผล่ครั้งเดียว ตอนเก็บกล้วยครบ CFG.BOSS_AT */
   spawnBoss(hero, cam) {
     this.bossOut = true;
@@ -273,13 +312,7 @@ class Arena {
           e.hp -= 1;
           e.hurtT = 0.16;
           if (e.hp <= 0) {
-            this.kills += 1;
-            this.dropBananas(e.x, e.y, e.boss ? CFG.BOSS.drop : CFG.ENEMY_TYPES[e.kind].drop);
-            fx.puff(e.x, e.y, e.kind === 'ghost');
-            if (e.boss) {
-              this.bossDead = true;
-              fx.text(e.x, e.y - 80, 'ล้มบอสคองได้!', '#ffd94a', 48);
-            }
+            this.killEnemy(e);
             sfx.kill();
           } else {
             sfx.ping();
