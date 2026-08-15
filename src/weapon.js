@@ -10,10 +10,10 @@ const UPGRADES = [
   { id: 'sk_storm', title: 'อัปสกิล R ดาวกระจาย', desc: 'ดาวเยอะขึ้น คูลดาวน์สั้นลง', icon: 'star' },
   { id: 'boomerang', title: 'ดาวบูมเมอแรง', desc: 'ดาวเหวี่ยงวกกลับมาหาตัว โดนศัตรูซ้ำได้', icon: 'star' },
   { id: 'orbit', title: 'วงแหวนป้องกัน', desc: 'มีดาวลอยรอบตัวคอยฟันศัตรูที่เข้าใกล้', icon: 'star' },
-  { id: 'melee_dmg', title: 'ดาบคมขึ้น', desc: 'ฟันประชิดแรงขึ้น +1 ดาเมจ', icon: 'rock' },
-  { id: 'melee_range', title: 'ดาบยาวขึ้น', desc: 'ฟันประชิดระยะไกลขึ้น', icon: 'rock' },
-  { id: 'melee_rate', title: 'ฟันถี่ขึ้น', desc: 'คูลดาวน์ฟันประชิดสั้นลง', icon: 'rock' },
-  { id: 'melee_arc', title: 'ฟันกว้างขึ้น', desc: 'มุมสวิงดาบกว้างขึ้น โดนหลายตัวพร้อมกัน', icon: 'rock' },
+  { id: 'melee_dmg', title: 'ดาบคมขึ้น', desc: 'ฟันประชิดแรงขึ้น +1 ดาเมจ', icon: 'sword' },
+  { id: 'melee_range', title: 'ดาบยาวขึ้น', desc: 'ฟันประชิดระยะไกลขึ้น', icon: 'sword' },
+  { id: 'melee_rate', title: 'ฟันถี่ขึ้น', desc: 'คูลดาวน์ฟันประชิดสั้นลง', icon: 'sword' },
+  { id: 'melee_arc', title: 'ฟันกว้างขึ้น', desc: 'มุมสวิงดาบกว้างขึ้น โดนหลายตัวพร้อมกัน', icon: 'sword' },
 ];
 
 class Weapon {

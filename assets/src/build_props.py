@@ -96,6 +96,27 @@ def hand_frame(i):
     return c
 
 
+def sword():
+    """ดาบสั้นแบบนินจา ใบมีดเฉียง 45 องศา ใช้เป็นไอคอนการ์ดอัปเกรดฟันประชิด"""
+    c = Canvas(16, 16)
+    STEEL = ramp("#c9d3dc", steps=5)
+    HILT = ramp("#6b4a2a", steps=5)
+    # ใบมีด — เส้นหนาเฉียงจากล่างซ้ายขึ้นบนขวา
+    for i in range(9):
+        x, y = 3 + i, 11 - i
+        c.set(x, y, STEEL[3])
+        c.set(x + 1, y, STEEL[2])
+        c.set(x, y - 1, STEEL[4])          # สันมีดสว่างวาบ
+    c.set(11, 1, STEEL[4]); c.set(12, 1, STEEL[4])  # ปลายแหลม
+    # ด้ามจับ + การ์ด
+    c.set(2, 12, HILT[3]); c.set(1, 13, HILT[2])
+    c.line(1, 13, 4, 10, "#2b1b13")          # เส้นกากบาทการ์ดสั้นๆ
+    c.rect(0, 13, 3, 3, HILT[2])
+    c.set(0, 14, HILT[1])
+    c.outline(INK)
+    return c
+
+
 def radio():
     c = Canvas(16, 16)
     c.rect(2, 6, 12, 8, "#8a8f98")
@@ -117,6 +138,7 @@ items = {
     "banana_peel": peel(),
     "basket": basket(),
     "radio": radio(),
+    "sword": sword(),
 }
 for name, c in items.items():
     save(c, os.path.join(SPR, f"{name}.png"))

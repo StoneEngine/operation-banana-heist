@@ -8,6 +8,7 @@ const SPRITES = {
   stone: 'stone.png',
   rock: 'rock.png',
   star: 'star.png',
+  sword: 'sword.png',
   banana: 'banana.png',
   banana_gold: 'banana_gold.png',
   banana_peel: 'banana_peel.png',
