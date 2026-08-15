@@ -271,7 +271,6 @@ function drawHero(ctx, hero, time) {
     hero.dir === 'side' && hero.face < 0);
   ctx.restore();
 
-  hpBar(ctx, hero.x, hero.y + 12, 46, hero.hp / hero.maxHp);
   if (SHOW_HITBOX) ring(ctx, hero.x, hero.hitY, CFG.HERO_R, '#4dff9f');
 }
 
