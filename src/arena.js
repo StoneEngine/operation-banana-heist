@@ -54,10 +54,6 @@ class Arena {
     }
     this.enemies = this.enemies.filter((e) => e.hp > 0);
     fx.meleeSwing(hero.x, hero.hitY, base, range, arc);
-    fx.dashTrail(hero.x, hero.y);
-    hero.kx += Math.cos(base) * M.lunge;
-    hero.ky += Math.sin(base) * M.lunge;
-    hero.iframe = Math.max(hero.iframe, M.lungeIframe);
     sfx.melee();
   }
 
