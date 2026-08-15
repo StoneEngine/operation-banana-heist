@@ -110,8 +110,8 @@ window.addEventListener('keydown', (e) => {
     pushMove();
     return;
   }
-  // สกิลเดียว: R = ดาวกระจายรอบทิศ
-  if (e.code === 'KeyR') {
+  // สกิลเดียว: R = ดาวกระจายรอบทิศ (ถ้ากด Ctrl/Cmd ค้างด้วย ปล่อยผ่านให้เบราว์เซอร์ เผื่อ Ctrl+Shift+R รีเฟรช)
+  if (e.code === 'KeyR' && !e.ctrlKey && !e.metaKey) {
     e.preventDefault();
     sfx.unlock();
     if (game.running && !game.paused) {
