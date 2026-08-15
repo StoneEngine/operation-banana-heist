@@ -29,7 +29,6 @@ const game = {
   skills: new Skills(),
   cam: { x: 0, y: 0 },
   nextUpgradeAt: CFG.UPGRADE_EVERY,
-  healAcc: 0,             // กล้วยสะสมสำหรับฟื้นเลือด
   paused: false,          // true ตอนเลือกอัปเกรด
   time: 0,
   running: false,
@@ -221,7 +220,6 @@ function start() {
   game.cam.x = clampNum(game.player.x - CFG.W / 2, 0, CFG.WORLD.w - CFG.W);
   game.cam.y = clampNum(game.player.y - CFG.H / 2, 0, CFG.WORLD.h - CFG.H);
   game.nextUpgradeAt = CFG.UPGRADE_EVERY;
-  game.healAcc = 0;
   game.paused = false;
   game.bossCelebrating = false;
   game.bossCelebrateT = 0;
@@ -276,15 +274,9 @@ function frame(now) {
       game.round.bananas += gain;
       // นับสะสมแยกต่างหาก ไม่ลดตอนโดนจับ ใช้ปลดล็อกอัปเกรดสกิลทุก CFG.UPGRADE_EVERY ลูก
       game.round.totalCollected += gain;
-      // กินกล้วยครบทุกๆ HEAL_EVERY = ฟื้นเลือด 1 หน่วย
-      game.healAcc += gain;
-      while (game.healAcc >= CFG.HEAL_EVERY) {
-        game.healAcc -= CFG.HEAL_EVERY;
-        if (game.player.hp < game.player.maxHp) {
-          game.player.hp += 1;
-          fx.text(game.player.x, game.player.hitY - 70, '+1 เลือด', '#4dff9f', 32);
-          sfx.heal();
-        }
+      // กล้วยทุกลูก heal นิดเดียว (เศษ HP สะสมทีละน้อย ไม่ใช่ +1 เต็มหน่วยทุก N ลูก)
+      if (game.player.hp < game.player.maxHp) {
+        game.player.hp = Math.min(game.player.maxHp, game.player.hp + gain * CFG.HEAL_PER_BANANA);
       }
       // ใช้ totalCollected (ไม่ลดตอนโดนจับ) กันเคสโดนตีกล้วยหล่นจน bananas ไม่ถึงเกณฑ์สักที
       // ทั้งที่ความยากขึ้นไปเรื่อยๆ ตามเวลา — ผู้เล่นจะติดฟาร์มวนไม่จบ เจอบอสไม่ได้สักที

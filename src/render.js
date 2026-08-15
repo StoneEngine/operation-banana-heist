@@ -376,24 +376,27 @@ function drawFx(ctx) {
   for (const w of fx.swings) {
     const t = 1 - w.life / w.max;                    // 0 -> 1 ตลอดช่วงฟัน
     const half = w.arc / 2;
-    const r = w.range * (0.55 + t * 0.45);
+    const r = w.range * (0.75 + t * 0.25);
+    const sweepT = Math.min(1, t / 0.6);              // สวิงจริงจบใน 60% แรก ที่เหลือคือจางหาย
+    const sweepEnd = -half + w.arc * sweepT;          // ป้ายจากขอบล่างไล่ขึ้นไปขอบบน (ตามมุม -half -> +half)
     ctx.save();
     ctx.translate(w.x, w.y);
     ctx.rotate(w.angle);
-    // เสี้ยววงกลมเต็มโค้งสีทอง พัดออกจากตัวเต็มมุมสวิงจริง (เกือบครึ่งวงกลม)
+    // เสี้ยววงกลมสีทอง ค่อยๆ กวาดจากขอบหนึ่งไปอีกขอบ ไม่ใช่โผล่มาเต็มพร้อมกัน
     ctx.globalAlpha = (1 - t) * 0.85;
     ctx.fillStyle = '#ffd94a';
     ctx.beginPath();
     ctx.moveTo(0, 0);
-    ctx.arc(0, 0, r, -half, half);
+    ctx.arc(0, 0, r, -half, sweepEnd);
     ctx.closePath();
     ctx.fill();
-    // ขอบสว่างวาบด้านนอกให้เห็นชัดขึ้น
+    // ปลายดาบสว่างวาบ ไล่ตามจังหวะกวาด
     ctx.globalAlpha = (1 - t) * 0.95;
     ctx.strokeStyle = '#fff1e0';
     ctx.lineWidth = 5;
     ctx.beginPath();
-    ctx.arc(0, 0, r, -half, half);
+    ctx.moveTo(0, 0);
+    ctx.lineTo(Math.cos(sweepEnd) * r, Math.sin(sweepEnd) * r);
     ctx.stroke();
     ctx.restore();
   }
