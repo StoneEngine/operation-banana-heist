@@ -3,10 +3,10 @@
 เกม 2D บนเว็บ (HTML + CSS + JavaScript + Canvas) ส่งงานวิชา **273389 Game Design and Development**
 กิจกรรม **Game2D for Sci Week** · มหาวิทยาลัยนเรศวร
 
-- ชื่อกลุ่ม: _(ใส่ชื่อกลุ่ม)_
-- สมาชิก: _(ใส่ชื่อ-รหัสนิสิตทุกคน)_
+- ชื่อกลุ่ม: ปฏิบัติการปล้นกล้วย
 - **เล่นเกมเลย: https://stoneengine.github.io/operation-banana-heist/**
-- คู่มือ/รายงาน: [docs/manual.md](docs/manual.md)
+- 📁 **All Assets & Files:** [Google Drive Folder](https://drive.google.com/drive/folders/1hVRfPncKyHrzfOmiTwUGPi23RW_DWd4P?usp=sharing)
+- ⭐ **ผลประเมิน:** ยังไม่เปิดให้ประเมินในขณะนี้
 
 ## วิธีเล่น
 
