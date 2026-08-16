@@ -278,9 +278,8 @@ function frame(now) {
       if (game.player.hp < game.player.maxHp) {
         game.player.hp = Math.min(game.player.maxHp, game.player.hp + gain * CFG.HEAL_PER_BANANA);
       }
-      // ใช้ totalCollected (ไม่ลดตอนโดนจับ) กันเคสโดนตีกล้วยหล่นจน bananas ไม่ถึงเกณฑ์สักที
-      // ทั้งที่ความยากขึ้นไปเรื่อยๆ ตามเวลา — ผู้เล่นจะติดฟาร์มวนไม่จบ เจอบอสไม่ได้สักที
-      if (!game.arena.bossOut && game.round.totalCollected >= CFG.BOSS_AT) {
+      // ย้อนกลับมาใช้ bananas (จำนวนที่ถือจริง ลดได้ตอนโดนจับ) ตามที่ผู้ใช้ขอ — ตั้งใจแล้ว
+      if (!game.arena.bossOut && game.round.bananas >= CFG.BOSS_AT) {
         game.arena.spawnBoss(game.player, game.cam);
       }
       if (game.round.totalCollected >= game.nextUpgradeAt) {

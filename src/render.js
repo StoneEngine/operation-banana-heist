@@ -188,6 +188,16 @@ function hpBar(ctx, x, y, w, ratio, color = '#4dff9f') {
   ctx.fillRect(x - w / 2, y, w * Math.max(0, ratio), h);
 }
 
+// สีหลอดเลือดผู้เล่น ไล่จากเขียว (เลือดเต็ม) → ส้ม (กลาง) → แดง (ใกล้ตาย)
+const HP_COLOR_HIGH = '#4dff9f';
+const HP_COLOR_MID = '#ffb84a';
+const HP_COLOR_LOW = '#ff6b5a';
+function hpColorFor(ratio) {
+  if (ratio <= 0.25) return HP_COLOR_LOW;
+  if (ratio <= 0.5) return HP_COLOR_MID;
+  return HP_COLOR_HIGH;
+}
+
 function shadow(ctx, x, y, rx) {
   ctx.fillStyle = 'rgba(18,26,14,0.3)';
   ctx.beginPath();
@@ -490,7 +500,7 @@ function drawHud(ctx, { round, arena, player, weapon, skills }) {
   // เลือด มุมซ้ายล่าง — ไอคอนหัวใจแทนคำว่า "เลือด"
   panel(ctx, 16, CFG.H - 78, 268, 62);
   ctx.drawImage(img.heart, 26, CFG.H - 62, 30, 30);
-  hpBar(ctx, 180, CFG.H - 58, 170, player.hp / player.maxHp);
+  hpBar(ctx, 180, CFG.H - 58, 170, player.hp / player.maxHp, hpColorFor(player.hp / player.maxHp));
 
   drawAbilityBar(ctx, player, skills);
 }

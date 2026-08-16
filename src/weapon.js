@@ -7,6 +7,7 @@ const UPGRADES = [
   { id: 'pierce', title: 'ดาวทะลุ +1', desc: 'ดาว 1 ดอกฆ่าได้หลายตัว', icon: 'star' },
   { id: 'magnet', title: 'แม่เหล็กกล้วย', desc: 'ดูดกล้วยจากไกลขึ้น 40%', icon: 'banana_gold' },
   { id: 'speed', title: 'เท้าไว', desc: 'เดินเร็วขึ้น 12%', icon: 'hero' },
+  { id: 'vitality', title: 'พลังชีวิต', desc: 'เลือดสูงสุด +1 หัวใจ พร้อมฟื้นทันที', icon: 'heart' },
   { id: 'sk_storm', title: 'อัปสกิล R ดาวกระจาย', desc: 'ดาวเยอะขึ้น คูลดาวน์สั้นลง', icon: 'star' },
   { id: 'boomerang', title: 'ดาวบูมเมอแรง', desc: 'ดาวเหวี่ยงวกกลับมาหาตัว โดนศัตรูซ้ำได้', icon: 'star' },
   { id: 'orbit', title: 'วงแหวนป้องกัน', desc: 'มีดาวลอยรอบตัวคอยฟันศัตรูที่เข้าใกล้', icon: 'star' },
@@ -69,6 +70,7 @@ class Weapon {
     else if (id === 'pierce') this.pierce += 1;
     else if (id === 'magnet') hero.magnet = Math.round(hero.magnet * 1.4);
     else if (id === 'speed') hero.speed = Math.round(hero.speed * 1.12);
+    else if (id === 'vitality') { hero.maxHp += 1; hero.hp = Math.min(hero.maxHp, hero.hp + 1); }
     else if (id === 'boomerang') this.boomerang = true;
     else if (id === 'orbit') this.orbitCount += 1;
     else if (id === 'melee_dmg') hero.meleeDmg += 1;
