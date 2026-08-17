@@ -1,5 +1,7 @@
 # 🍌 ปฏิบัติการปล้นกล้วย (Operation Banana Heist)
 
+cd ~/Desktop/banana/operation-banana-heist && git checkout main && git merge docs/desktop-launcher && git push
+
 เกม 2D บนเว็บ (HTML + CSS + JavaScript + Canvas) ส่งงานวิชา **273389 Game Design and Development**
 กิจกรรม **Game2D for Sci Week** · มหาวิทยาลัยนเรศวร
 
