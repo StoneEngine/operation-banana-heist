@@ -7,8 +7,7 @@ cd ~/Desktop/banana/operation-banana-heist && git checkout main && git merge doc
 
 - ชื่อกลุ่ม: ปฏิบัติการปล้นกล้วย
 - **เล่นเกมเลย: https://stoneengine.github.io/operation-banana-heist/**
-- 📁 **All Assets & Files:** [Google Drive Folder](https://drive.google.com/drive/folders/1hVRfPncKyHrzfOmiTwUGPi23RW_DWd4P?usp=sharing)
-- ⭐ **ผลประเมิน:** ยังไม่เปิดให้ประเมินในขณะนี้
+- 📁 **All Assets & Files & ผลการประเมิน:** [Google Drive Folder](https://drive.google.com/drive/folders/1hVRfPncKyHrzfOmiTwUGPi23RW_DWd4P?usp=sharing)
 
 ## วิธีเล่น
 
